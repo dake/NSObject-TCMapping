@@ -81,7 +81,7 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
         }
     }
     
-    return outArry;
+    return outArry.count > 0 ? outArry : nil;
 }
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic
@@ -112,9 +112,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
         }
         id key = nameMappingDic[nameKey];
         id value = dic[key];
+        if (nil == value) {
+            value = dic[nameKey];
+        }
         if (nil == value
             || [NSNull null] == value
-            || (context != nil && [self isPropertyReadOnly:self propertyName:nameKey])) {
+            /*|| (context != nil && [self isPropertyReadOnly:self propertyName:nameKey])*/) {
             continue;
         }
         

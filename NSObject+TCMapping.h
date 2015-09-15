@@ -13,7 +13,7 @@
 
 /**
  *	propertyNameMapping:
- *  format: @{@"propertyName":@"json'propertyName"}
+ *  format: @{@"propertyName": @"json'propertyName"}
  
  *	@return	the mapping dictionary
  */
@@ -21,17 +21,17 @@
 
 /**
  *	propertyTypeFormat
- *  format: @{@"propertyName":@"object'class name"}
+ *  format: @{@"propertyName": @"object'class name"}
  
- if studentMembers is a NSArray type, you can code the NSArray'member type here , such as  @"studentMembers":@"StudentCD"
- if teacher is a TeacherCD object value , you can code  @"teacher":@"TeacherCD"
+ if studentMembers is a NSArray type, you can code the NSArray'member type here , such as  @"studentMembers": @"StudentCD"
+ if teacher is a TeacherCD object value , you can code  @"teacher": @"TeacherCD"
  *	@return	the mapping dictionary
  */
 + (NSDictionary *)propertyTypeFormat;
 
 /**
  *	propertyForPrimaryKey:
- *  format: @{@"primaryKey1":@"value", @"primaryKey2":[NSNull null]}
+ *  format: @{@"primaryKey1": @"value", @"primaryKey2": [NSNull null]}
  
  *	@return	the primary key dictionary
  */
@@ -42,6 +42,8 @@
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic;
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
+
+- (void)mappingWithDictionary:(NSDictionary *)dic;
 
 - (BOOL)tc_validate;
 

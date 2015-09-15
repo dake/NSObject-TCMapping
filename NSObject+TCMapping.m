@@ -91,6 +91,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
 {
+    return [self mappingWithDictionary:dic managerObjectContext:context targetBlock:nil];
+}
+
++ (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
+                          targetBlock:(id (^)(void))targetBlock
+{
     if (nil == dic || ![dic isKindOfClass:NSDictionary.class] || dic.count < 1) {
         return nil;
     }
@@ -169,11 +175,17 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
         
         if (nil != value) {
             if (nil == obj) {
-                if (nil == context) {
-                    obj = [[self alloc] init];
+                if (nil != targetBlock) {
+                    obj = targetBlock();
                 }
-                else {
-                    obj = [self coreDataInstanceWithValue:dic withNameMappingDic:nameMappingDic withContext:context];
+                
+                if (nil == obj) {
+                    if (nil == context) {
+                        obj = [[self alloc] init];
+                    }
+                    else {
+                        obj = [self coreDataInstanceWithValue:dic withNameMappingDic:nameMappingDic withContext:context];
+                    }
                 }
             }
             [obj setValue:value forKey:nameKey];
@@ -254,6 +266,13 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     }
     
     return childObjects.count > 0 ? childObjects : nil;
+}
+
+- (void)mappingWithDictionary:(NSDictionary *)dic
+{
+    [self.class mappingWithDictionary:dic managerObjectContext:nil targetBlock:^id(void) {
+        return self;
+    }];
 }
 
 

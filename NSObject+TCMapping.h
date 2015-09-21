@@ -44,6 +44,7 @@
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic;
+- (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
 
 - (BOOL)tc_validate;
 

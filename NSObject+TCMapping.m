@@ -91,22 +91,28 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
 {
-    return [self mappingWithDictionary:dic managerObjectContext:context targetBlock:nil];
+    return [self mappingWithDictionary:dic propertyNameMapping:nil managerObjectContext:context targetBlock:nil];
 }
 
-+ (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
++ (instancetype)mappingWithDictionary:(NSDictionary *)dic
+                  propertyNameMapping:(NSDictionary *)extraNameMappingDic
+                 managerObjectContext:(NSManagedObjectContext *)context
                           targetBlock:(id (^)(void))targetBlock
 {
     if (nil == dic || ![dic isKindOfClass:NSDictionary.class] || dic.count < 1) {
         return nil;
     }
     
-    NSArray *systemReadwriteProperties = self.readwritePropertyListForCurrentClass;
-    NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:systemReadwriteProperties forKeys:systemReadwriteProperties];
-    NSDictionary *nameMappingDic = self.propertyNameMapping;
-    [tmpDic removeObjectsForKeys:nameMappingDic.allKeys];
-    [tmpDic addEntriesFromDictionary:nameMappingDic];
-    nameMappingDic = tmpDic;
+    NSDictionary *nameMappingDic = extraNameMappingDic;
+    if (nameMappingDic.count < 1) {
+        
+        NSArray *systemReadwriteProperties = self.readwritePropertyListForCurrentClass;
+        NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:systemReadwriteProperties forKeys:systemReadwriteProperties];
+        nameMappingDic = self.propertyNameMapping;
+        [tmpDic removeObjectsForKeys:nameMappingDic.allKeys];
+        [tmpDic addEntriesFromDictionary:nameMappingDic];
+        nameMappingDic = tmpDic;
+    }
     
     NSDictionary *typeMappingDic = self.propertyTypeFormat;
     
@@ -270,7 +276,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic
 {
-    [self.class mappingWithDictionary:dic managerObjectContext:nil targetBlock:^id(void) {
+    [self mappingWithDictionary:dic propertyNameMapping:nil];
+}
+
+- (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic
+{
+    [self.class mappingWithDictionary:dic propertyNameMapping:extraNameMappingDic managerObjectContext:nil targetBlock:^id(void) {
         return self;
     }];
 }

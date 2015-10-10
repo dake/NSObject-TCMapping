@@ -23,8 +23,7 @@
  *	propertyTypeFormat
  *  format: @{@"propertyName": @"object'class name"}
  
- if studentMembers is a NSArray type, you can code the NSArray'member type here , such as  @"studentMembers": @"StudentCD"
- if teacher is a TeacherCD object value , you can code  @"teacher": @"TeacherCD"
+ if studentMembers is a NSArray type, you can code the NSArray'member type here , such as  @"studentMembers": @"StudentClass"
  *	@return	the mapping dictionary
  */
 + (NSDictionary *)propertyTypeFormat;
@@ -47,5 +46,18 @@
 - (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
 
 - (BOOL)tc_validate;
+
+
+#pragma mark - async
+
++ (void)asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish;
+
++ (void)asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
+
++ (void)asyncMappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)asyncMappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
+
 
 @end

@@ -76,9 +76,11 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     
     NSMutableArray *outArry = [NSMutableArray array];
     for (NSDictionary *dic in arry) {
-        id obj = [self mappingWithDictionary:dic managerObjectContext:context];
-        if (nil != obj) {
-            [outArry addObject:obj];
+        @autoreleasepool {
+            id obj = [self mappingWithDictionary:dic managerObjectContext:context];
+            if (nil != obj) {
+                [outArry addObject:obj];
+            }
         }
     }
     
@@ -422,10 +424,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     }
     
     dispatch_async(queue ?: self.mappingQueue, ^{
-        id data = [self mappingWithDictionary:dic managerObjectContext:context];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            finish(data);
-        });
+        @autoreleasepool {
+            id data = [self mappingWithDictionary:dic managerObjectContext:context];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                finish(data);
+            });
+        }
     });
 }
 
@@ -436,10 +440,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     }
     
     dispatch_async(queue ?: self.mappingQueue, ^{
-        NSMutableArray *dataList = [self mappingWithArray:arry managerObjectContext:context];
-        dispatch_async(dispatch_get_main_queue(), ^{
-            finish(dataList);
-        });
+        @autoreleasepool {
+            NSMutableArray *dataList = [self mappingWithArray:arry managerObjectContext:context];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                finish(dataList);
+            });
+        }
     });
 }
 

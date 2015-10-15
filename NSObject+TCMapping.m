@@ -21,26 +21,95 @@
 #endif
 
 
-static const char *property_getTypeName(objc_property_t property)
+static char const *const kReadOnlyFlag = "R";
+
+
+static NSString *property_getTypeName(objc_property_t property, BOOL *isObj)
 {
 	const char *attributes = property_getAttributes(property);
     char buffer[1 + strlen(attributes)];
 	strcpy(buffer, attributes);
-	char *state = buffer, *attribute;
+    char *state = buffer;
+    char *attribute = NULL;
 	while ((attribute = strsep(&state, ",")) != NULL) {
 		if (attribute[0] == 'T') {
 			size_t len = strlen(attribute);
-			attribute[len - 1] = '\0';
-			return (const char *)[[NSData dataWithBytes:(attribute + 3) length:len - 2] bytes];
+            if ([@(attribute) hasPrefix:@"T@\""]) {
+                attribute[len - 1] = '\0';
+                if (NULL != isObj) {
+                    *isObj = YES;
+                }
+                return @((attribute + 3));
+            }
+            else {
+                if (NULL != isObj) {
+                    *isObj = NO;
+                }
+                return @((attribute + 1));
+            }
 		}
 	}
-	return "@";
+    
+    if (NULL != isObj) {
+        *isObj = YES;
+    }
+	return @"@";
 }
+
+static BOOL isPropertyReadOnly(Class klass ,NSString *propertyName)
+{
+    if (Nil == klass || klass == NSObject.class) {
+        return YES;
+    }
+    
+    objc_property_t property = class_getProperty(klass, propertyName.UTF8String);
+    if (NULL != property) {
+        char *readonly = property_copyAttributeValue(property, kReadOnlyFlag);
+        if (NULL == readonly) {
+            return NO;
+        }
+        else {
+            free(readonly);
+            return YES;
+        }
+    }
+    else {
+        return isPropertyReadOnly(class_getSuperclass(klass), propertyName);
+    }
+}
+
+static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
+{
+    if (Nil == klass || klass == NSObject.class) {
+        return nil;
+    }
+    
+    NSMutableArray *propertyNames = [NSMutableArray array];
+    unsigned int num = 0;
+    objc_property_t *properties = class_copyPropertyList(klass, &num);
+    for (NSInteger i = 0; i < num; ++i) {
+        // !!!: filter out readonly property
+        char *readonly = property_copyAttributeValue(properties[i], kReadOnlyFlag);
+        if (NULL == readonly) {
+            [propertyNames addObject:[NSString stringWithCString:property_getName(properties[i]) encoding:NSUTF8StringEncoding]];
+        }
+        else {
+            free(readonly);
+        }
+    }
+    free(properties);
+    
+    [propertyNames addObjectsFromArray:readwritePropertyListUntilNSObjectFrom(class_getSuperclass(klass))];
+    return propertyNames;
+}
+
 
 
 
 static NSRecursiveLock *s_recursiveLock;
 static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
+static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
+
 @implementation NSObject (TCMapping)
 
 - (BOOL)tc_validate
@@ -97,19 +166,25 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     return [self mappingWithDictionary:dic propertyNameMapping:nil managerObjectContext:context targetBlock:nil];
 }
 
-+ (instancetype)mappingWithDictionary:(NSDictionary *)dic
++ (instancetype)mappingWithDictionary:(NSDictionary *)dataDic
                   propertyNameMapping:(NSDictionary *)extraNameMappingDic
                  managerObjectContext:(NSManagedObjectContext *)context
                           targetBlock:(id(^)(void))targetBlock
 {
-    if (nil == dic || ![dic isKindOfClass:NSDictionary.class] || dic.count < 1) {
+    if (nil == dataDic || ![dataDic isKindOfClass:NSDictionary.class] || dataDic.count < 1) {
         return nil;
     }
+    
+    NSObject *obj = nil;
+    if (nil != targetBlock) {
+        obj = targetBlock();
+    }
+    Class currentClass = obj.class ?: self;
     
     NSDictionary *nameMappingDic = extraNameMappingDic;
     if (nameMappingDic.count < 1) {
         
-        NSArray *systemReadwriteProperties = [self readwritePropertyListUntilNSObjectFrom:self];
+        NSArray *systemReadwriteProperties = readwritePropertyListUntilNSObjectFrom(currentClass);
         NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:systemReadwriteProperties forKeys:systemReadwriteProperties];
         nameMappingDic = self.propertyNameMapping;
         [tmpDic removeObjectsForKeys:nameMappingDic.allKeys];
@@ -119,22 +194,18 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     
     NSDictionary *typeMappingDic = self.propertyTypeFormat;
     
-    id obj = nil;
-    if (nil != targetBlock) {
-        obj = targetBlock();
-    }
     
     for (NSString *nameKey in nameMappingDic.allKeys) {
         if (nil == nameKey
             || [NSNull null] == (NSNull *)nameKey
-            || [self isPropertyReadOnly:self propertyName:nameKey]) {
+            || isPropertyReadOnly(currentClass, nameKey)) {
             continue;
         }
         
-        id key = nameMappingDic[nameKey];
-        id value = dic[key];
+        id jsonKey = nameMappingDic[nameKey];
+        id value = dataDic[jsonKey];
         if (nil == value) {
-            value = dic[nameKey];
+            value = dataDic[nameKey];
         }
         if (nil == value || [NSNull null] == value) {
             continue;
@@ -146,11 +217,12 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
                 NSString *klassName = typeMappingDic[nameKey];
                 Class klass = Nil;
                 if (nil == klassName) {
-                    klass = [self propertyClassForPropertyName:key ofClass:self];
+                    klass = [self propertyClassForPropertyName:jsonKey ofClass:currentClass];
                 }
                 else {
                     klass = NSClassFromString(klassName);
                 }
+                
                 if (Nil != klass) {
                     value = [klass mappingWithDictionary:value propertyNameMapping:nil managerObjectContext:context targetBlock:nil == obj ? nil : ^id{
                         return [obj valueForKey:nameKey];
@@ -171,7 +243,7 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
                     value = [arrayItemType mappingArray:value withContext:context];
                 }
                 else {
-                    arrayItemType = [self propertyClassForPropertyName:nameMappingDic[nameKey] ofClass:self];
+                    arrayItemType = [self propertyClassForPropertyName:nameMappingDic[nameKey] ofClass:currentClass];
                     if (![arrayItemType isSubclassOfClass:NSArray.class]) {
                         value = nil;
                     }
@@ -181,28 +253,68 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
                 value = nil;
             }
         }
-        else {
-            if (nil == value) {
-                NSAssert(false, @"value not correspond to property type.");
-                return nil;
-            }
+        else if ([value isKindOfClass:NSString.class]) {
+            value = [currentClass mappingNSValueWithString:value propertyName:nameMappingDic[nameKey]];
+        }
+    
+        
+        if (nil == value) {
+            continue;
         }
         
-        if (nil != value) {
-            
-            if (nil == obj) {
-                if (nil == context) {
-                    obj = [[self alloc] init];
-                }
-                else {
-                    obj = [self coreDataInstanceWithValue:dic withNameMappingDic:nameMappingDic withContext:context];
-                }
+        if (nil == obj) {
+            if (nil == context) {
+                obj = [[self alloc] init];
             }
-            [obj setValue:value forKey:nameKey];
+            else {
+                obj = [self coreDataInstanceWithValue:dataDic withNameMappingDic:nameMappingDic withContext:context];
+            }
         }
+        [obj setValue:value forKey:nameKey];
     }
     
     return [obj tc_validate] ? obj : nil;
+}
+
++ (id)mappingNSValueWithString:(NSString *)value propertyName:(NSString *)propertyName
+{
+    NSString *typeNameString = nil;
+    [self propertyClassForPropertyName:propertyName ofClass:self toTypeName:&typeNameString];
+    if (nil == typeNameString || typeNameString.length < 5) {
+        return value;
+    }
+    
+    id ret = value;
+    if ([typeNameString isEqualToString:@(@encode(CGPoint))]) {
+        // "{x,y}"
+        ret = [NSValue valueWithCGPoint:CGPointFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(CGVector))]) {
+        // "{dx, dy}"
+        ret = [NSValue valueWithCGVector:CGVectorFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(CGSize))]) {
+        // "{w, h}"
+        ret = [NSValue valueWithCGSize:CGSizeFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(CGRect))]) {
+        // "{{x,y},{w, h}}"
+        ret = [NSValue valueWithCGRect:CGRectFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(CGAffineTransform))]) {
+        // "{a, b, c, d, tx, ty}"
+        ret = [NSValue valueWithCGAffineTransform:CGAffineTransformFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(UIEdgeInsets))]) {
+        // "{top, left, bottom, right}"
+        ret = [NSValue valueWithUIEdgeInsets:UIEdgeInsetsFromString(value)];
+    }
+    else if ([typeNameString isEqualToString:@(@encode(UIOffset))]) {
+        // "{horizontal, vertical}"
+        ret = [NSValue valueWithUIOffset:UIOffsetFromString(value)];
+    }
+    
+    return ret;
 }
 
 + (instancetype)coreDataInstanceWithValue:(NSDictionary *)value withNameMappingDic:(NSDictionary *)nameMappingDic withContext:(NSManagedObjectContext *)context
@@ -295,13 +407,19 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 
 + (Class)propertyClassForPropertyName:(NSString *)propertyName ofClass:(Class)klass
 {
-    if (Nil == klass) {
+    return [self propertyClassForPropertyName:propertyName ofClass:klass toTypeName:NULL];
+}
+
++ (Class)propertyClassForPropertyName:(NSString *)propertyName ofClass:(Class)klass toTypeName:(NSString **)typeNameString
+{
+    if (Nil == klass || klass == NSObject.class) {
         return Nil;
     }
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         s_propertyClassByClassAndPropertyName = [NSMutableDictionary dictionary];
+        s_propertyScalaTypeByClassAndPropertyName = [NSMutableDictionary dictionary];
         s_recursiveLock = [[NSRecursiveLock alloc] init];
     });
     
@@ -311,75 +429,48 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
     NSString *value = s_propertyClassByClassAndPropertyName[key];
     
     if (nil != value) {
+        if (NULL != typeNameString) {
+            *typeNameString = value;
+        }
         [s_recursiveLock unlock];
         return NSClassFromString(value);
     }
     
-    unsigned int propertyCount = 0;
-    objc_property_t *properties = class_copyPropertyList(klass, &propertyCount);
+    value = s_propertyScalaTypeByClassAndPropertyName[key];
+    if (nil != value) {
+        if (NULL != typeNameString) {
+            *typeNameString = value;
+        }
+        [s_recursiveLock unlock];
+        return Nil;
+    }
     
-    for (NSInteger i = 0; i < propertyCount; ++i) {
-        objc_property_t property = properties[i];
-        const char *name = property_getName(property);
-        
-        if (strcmp(propertyName.UTF8String, name) == 0) {
-            free(properties);
-            const char *typeName = property_getTypeName(property);
-            if (typeName != NULL) {
-                NSString *className = [NSString stringWithUTF8String:typeName];
+    objc_property_t property = class_getProperty(klass, propertyName.UTF8String);
+    if (NULL != property) {
+        BOOL isObj = NO;
+        NSString *className = property_getTypeName(property, &isObj);
+        if (nil != className) {
+            if (NULL != typeNameString) {
+                *typeNameString = className;
+            }
+            
+            if (isObj) {
                 s_propertyClassByClassAndPropertyName[key] = className;
-                
                 [s_recursiveLock unlock];
                 return NSClassFromString(className);
             }
-            
-            [s_recursiveLock unlock];
-            return Nil;
+            else {
+                s_propertyScalaTypeByClassAndPropertyName[key] = className;
+            }
         }
+        
+        [s_recursiveLock unlock];
+        return Nil;
     }
-    free(properties);
     
     [s_recursiveLock unlock];
-    return [self propertyClassForPropertyName:propertyName ofClass:class_getSuperclass(klass)];
+    return [self propertyClassForPropertyName:propertyName ofClass:class_getSuperclass(klass) toTypeName:typeNameString];
 }
-
-+ (BOOL)isPropertyReadOnly:(Class)klass propertyName:(NSString *)propertyName
-{
-    char *readonly = property_copyAttributeValue(class_getProperty(klass, propertyName.UTF8String), "R");
-    if (NULL == readonly) {
-        return NO;
-    }
-    else {
-        free(readonly);
-        return YES;
-    }
-}
-
-+ (NSArray *)readwritePropertyListUntilNSObjectFrom:(Class)klass
-{
-    if (Nil == klass || klass == NSObject.class) {
-        return nil;
-    }
-    
-    NSMutableArray *propertyNames = [NSMutableArray array];
-    unsigned int num = 0;
-    objc_property_t *properties = class_copyPropertyList(klass, &num);
-    for (NSInteger i = 0; i < num; ++i) {
-        // !!!: filter out readonly property
-        char *readonly = property_copyAttributeValue(properties[i], "R");
-        if (NULL == readonly) {
-            [propertyNames addObject:[NSString stringWithCString:property_getName(properties[i]) encoding:NSUTF8StringEncoding]];
-        }
-        else {
-            free(readonly);
-        }
-    }
-    free(properties);
-    
-    [propertyNames addObjectsFromArray:[self readwritePropertyListUntilNSObjectFrom:class_getSuperclass(klass)]];
-    return propertyNames;
-}
-
 
 
 #pragma mark - async
@@ -452,12 +543,14 @@ static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 @end
 
 
+
+#pragma mark - NSString+TC_NSNumber
+
 @interface NSString (TC_NSNumber)
 @end
 
 @implementation NSString (TC_NSNumber)
 
-#pragma mark -
 
 - (char)charValue
 {

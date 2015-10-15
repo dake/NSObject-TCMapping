@@ -11,30 +11,44 @@
 @class NSManagedObjectContext;
 @interface NSObject (TCMapping)
 
+
 /**
- *	propertyNameMapping:
- *  format: @{@"propertyName": @"json'propertyName"}
+ @brief	property type support CGPoint, CGSize, etc...
+ while, the mapping json string format as below:
  
- *	@return	the mapping dictionary
+ CGPoint <-- "{x,y}"
+ CGVector <-- "{dx, dy}"
+ CGSize <-- "{w, h}"
+ CGRect <-- "{{x,y},{w, h}}"
+ CGAffineTransform <-- "{a, b, c, d, tx, ty}"
+ UIEdgeInsets <-- "{top, left, bottom, right}"
+ UIOffset <-- "{horizontal, vertical}"
+ 
+ */
+
+
+/**
+ @brief	format: @{@"propertyName": @"json'propertyName"}
+ 
+ @return the mapping dictionary
  */
 + (NSDictionary *)propertyNameMapping;
 
 /**
- *	propertyTypeFormat
- *  format: @{@"propertyName": @"object'class name"}
+ @brief	format: @{@"propertyName": @"object'class name"}
  
- if studentMembers is a NSArray type, you can code the NSArray'member type here , such as  @"studentMembers": @"StudentClass"
- *	@return	the mapping dictionary
+ @return the mapping dictionary
  */
 + (NSDictionary *)propertyTypeFormat;
 
 /**
- *	propertyForPrimaryKey:
- *  format: @{@"primaryKey1": @"value", @"primaryKey2": [NSNull null]}
+ @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": [NSNull null]}
+ [NSNull null] will be replace with an exact value while mapping.
  
- *	@return	the primary key dictionary
+ @return the primary key dictionary
  */
 + (NSDictionary *)propertyForPrimaryKey;
+
 
 + (NSMutableArray *)mappingWithArray:(NSArray *)arry;
 + (NSMutableArray *)mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context;

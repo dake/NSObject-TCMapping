@@ -543,6 +543,20 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
 @end
 
 
+#pragma mark - NSDictionary+TCMapping
+
+@implementation NSDictionary (TCMapping)
+
+- (id)valueForKeyExceptNull:(NSString *)key
+{
+    id obj = [self valueForKey:key];
+
+    return [NSNull null] == obj ? nil : obj;
+}
+
+@end
+
+
 
 #pragma mark - NSString+TC_NSNumber
 

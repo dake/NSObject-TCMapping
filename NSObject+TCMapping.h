@@ -75,3 +75,10 @@
 
 
 @end
+
+
+@interface NSDictionary (TCMapping)
+
+- (id)valueForKeyExceptNull:(NSString *)key;
+
+@end

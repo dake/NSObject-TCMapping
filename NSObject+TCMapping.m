@@ -253,8 +253,18 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
                 value = nil;
             }
         }
-        else if ([value isKindOfClass:NSString.class]) {
-            value = [currentClass mappingNSValueWithString:value propertyName:nameMappingDic[nameKey]];
+        else {
+            if ([value isKindOfClass:NSString.class]) {
+                value = [currentClass mappingNSValueWithString:value propertyName:nameMappingDic[nameKey]];
+            }
+            
+            Class klass = [self propertyClassForPropertyName:jsonKey ofClass:currentClass];
+            if (Nil != klass && [klass isSubclassOfClass:NSString.class] && ![value isKindOfClass:NSString.class]) {
+                value = [NSString stringWithFormat:@"%@", value];
+                if ([klass isSubclassOfClass:NSMutableString.class]) {
+                    value = [klass stringWithString:value];
+                }
+            }
         }
     
         
@@ -270,6 +280,7 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
                 obj = [self coreDataInstanceWithValue:dataDic withNameMappingDic:nameMappingDic withContext:context];
             }
         }
+        
         [obj setValue:value forKey:nameKey];
     }
     
@@ -412,7 +423,7 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
 
 + (Class)propertyClassForPropertyName:(NSString *)propertyName ofClass:(Class)klass toTypeName:(NSString **)typeNameString
 {
-    if (Nil == klass || klass == NSObject.class) {
+    if (Nil == klass || klass == NSObject.class || nil == propertyName) {
         return Nil;
     }
     

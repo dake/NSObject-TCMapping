@@ -40,8 +40,7 @@ static NSString *property_getTypeName(objc_property_t property, BOOL *isObj)
                     *isObj = YES;
                 }
                 return @((attribute + 3));
-            }
-            else {
+            } else {
                 if (NULL != isObj) {
                     *isObj = NO;
                 }
@@ -58,7 +57,7 @@ static NSString *property_getTypeName(objc_property_t property, BOOL *isObj)
 
 static BOOL isPropertyReadOnly(Class klass ,NSString *propertyName)
 {
-    if (Nil == klass || klass == NSObject.class) {
+    if (nil == propertyName || Nil == klass || klass == NSObject.class) {
         return YES;
     }
     
@@ -67,8 +66,7 @@ static BOOL isPropertyReadOnly(Class klass ,NSString *propertyName)
         char *readonly = property_copyAttributeValue(property, kReadOnlyFlag);
         if (NULL == readonly) {
             return NO;
-        }
-        else {
+        } else {
             free(readonly);
             return YES;
         }
@@ -92,8 +90,7 @@ static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
         char *readonly = property_copyAttributeValue(properties[i], kReadOnlyFlag);
         if (NULL == readonly) {
             [propertyNames addObject:[NSString stringWithCString:property_getName(properties[i]) encoding:NSUTF8StringEncoding]];
-        }
-        else {
+        } else {
             free(readonly);
         }
     }
@@ -186,26 +183,26 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
         
         NSArray *systemReadwriteProperties = readwritePropertyListUntilNSObjectFrom(currentClass);
         NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:systemReadwriteProperties forKeys:systemReadwriteProperties];
-        nameMappingDic = self.propertyNameMapping;
+        nameMappingDic = currentClass.propertyNameMapping;
         [tmpDic removeObjectsForKeys:nameMappingDic.allKeys];
         [tmpDic addEntriesFromDictionary:nameMappingDic];
         nameMappingDic = tmpDic;
     }
     
-    NSDictionary *typeMappingDic = self.propertyTypeFormat;
+    NSDictionary *typeMappingDic = currentClass.propertyTypeFormat;
     
     
-    for (NSString *nameKey in nameMappingDic.allKeys) {
-        if (nil == nameKey
-            || [NSNull null] == (NSNull *)nameKey
-            || isPropertyReadOnly(currentClass, nameKey)) {
+    for (NSString *propertyName in nameMappingDic.allKeys) {
+        if (nil == propertyName
+            || [NSNull null] == (NSNull *)propertyName
+            || isPropertyReadOnly(currentClass, propertyName)) {
             continue;
         }
         
-        id jsonKey = nameMappingDic[nameKey];
+        id jsonKey = nameMappingDic[propertyName];
         id value = dataDic[jsonKey];
         if (nil == value) {
-            value = dataDic[nameKey];
+            value = dataDic[propertyName];
         }
         if (nil == value || [NSNull null] == value) {
             continue;
@@ -214,59 +211,43 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
         if ([value isKindOfClass:NSDictionary.class]) {
             if ([(NSDictionary *)value count] > 0) {
                 
-                NSString *klassName = typeMappingDic[nameKey];
+                NSString *klassName = typeMappingDic[propertyName];
                 Class klass = Nil;
                 if (nil == klassName) {
-                    klass = [self propertyClassForPropertyName:jsonKey ofClass:currentClass];
-                }
-                else {
+                    klass = [self propertyClassForPropertyName:propertyName ofClass:currentClass];
+                } else {
                     klass = NSClassFromString(klassName);
                 }
                 
                 if (Nil != klass) {
                     value = [klass mappingWithDictionary:value propertyNameMapping:nil managerObjectContext:context targetBlock:nil == obj ? nil : ^id{
-                        return [obj valueForKey:nameKey];
+                        return [obj valueForKey:propertyName];
                     }];
-                }
-                else {
+                } else {
                     value = nil;
                 }
-            }
-            else {
+            } else {
                 value = nil;
             }
-        }
-        else if ([value isKindOfClass:NSArray.class]) {
+            
+        } else if ([value isKindOfClass:NSArray.class]) {
             if ([(NSArray *)value count] > 0) {
-                Class arrayItemType = NSClassFromString(typeMappingDic[nameKey]);
+                Class arrayItemType = NSClassFromString(typeMappingDic[propertyName]);
                 if (Nil != arrayItemType) {
                     value = [arrayItemType mappingArray:value withContext:context];
-                }
-                else {
-                    arrayItemType = [self propertyClassForPropertyName:nameMappingDic[nameKey] ofClass:currentClass];
+                } else {
+                    arrayItemType = [self propertyClassForPropertyName:propertyName ofClass:currentClass];
                     if (![arrayItemType isSubclassOfClass:NSArray.class]) {
                         value = nil;
                     }
                 }
-            }
-            else {
+            } else {
                 value = nil;
             }
+        } else {
+            value = [currentClass valueForBaseTypeOfPropertyName:propertyName value:value];
         }
-        else {
-            if ([value isKindOfClass:NSString.class]) {
-                value = [currentClass mappingNSValueWithString:value propertyName:nameMappingDic[nameKey]];
-            }
-            
-            Class klass = [self propertyClassForPropertyName:jsonKey ofClass:currentClass];
-            if (Nil != klass && [klass isSubclassOfClass:NSString.class] && ![value isKindOfClass:NSString.class]) {
-                value = [NSString stringWithFormat:@"%@", value];
-                if ([klass isSubclassOfClass:NSMutableString.class]) {
-                    value = [klass stringWithString:value];
-                }
-            }
-        }
-    
+        
         
         if (nil == value) {
             continue;
@@ -274,55 +255,93 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
         
         if (nil == obj) {
             if (nil == context) {
-                obj = [[self alloc] init];
-            }
-            else {
-                obj = [self coreDataInstanceWithValue:dataDic withNameMappingDic:nameMappingDic withContext:context];
+                obj = [[currentClass alloc] init];
+            } else {
+                obj = [currentClass coreDataInstanceWithValue:dataDic withNameMappingDic:nameMappingDic withContext:context];
             }
         }
         
-        [obj setValue:value forKey:nameKey];
+        [obj setValue:value forKey:propertyName];
     }
     
     return [obj tc_validate] ? obj : nil;
 }
 
-+ (id)mappingNSValueWithString:(NSString *)value propertyName:(NSString *)propertyName
++ (id)valueForBaseTypeOfPropertyName:(NSString *)propertyName value:(id)value
 {
-    NSString *typeNameString = nil;
-    [self propertyClassForPropertyName:propertyName ofClass:self toTypeName:&typeNameString];
-    if (nil == typeNameString || typeNameString.length < 5) {
-        return value;
+    id ret = value;
+    
+     NSString *typeNameString = nil;
+     Class klass = [self propertyClassForPropertyName:propertyName ofClass:self toTypeName:&typeNameString];
+    
+    if (nil != typeNameString && typeNameString.length >= 6) {
+        // NSValue <- NSString
+        ret = [self mappingNSValueWithString:value propertyName:typeNameString];
     }
     
+    if (nil == ret || Nil == klass) {
+        return ret;
+    }
+    
+    if ([klass isSubclassOfClass:NSString.class]) {
+        // NSString <- non NSString
+        BOOL isStringValue = [ret isKindOfClass:NSString.class];
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+        ret = isStringValue ? (NSString *)ret : [NSString stringWithFormat:@"%@", ret];
+        // [klass isSubclassOfClass:NSMutableString.class]
+        if (klass != NSString.class) {
+            ret = [klass stringWithString:ret];
+        }
+        
+    } else if ([klass isSubclassOfClass:NSNumber.class]) {
+        if (![ret isKindOfClass:NSNumber.class]) {
+            NSAssert(false, @"property type %@ doesn't match value type %@", NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+            if ([ret isKindOfClass:NSString.class]) {
+                // NSNumber <- NSString
+                ret = [klass numberWithDouble:((NSString *)value).doubleValue];
+            } else {
+                ret = nil;
+            }
+        }
+    }
+    
+    return ret;
+}
+
++ (id)mappingNSValueWithString:(NSString *)value propertyName:(NSString *)typeNameString
+{
+    BOOL isStringValue = [value isKindOfClass:NSString.class];
+
     id ret = value;
+
     if ([typeNameString isEqualToString:@(@encode(CGPoint))]) {
         // "{x,y}"
-        ret = [NSValue valueWithCGPoint:CGPointFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(CGVector))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithCGPoint:CGPointFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(CGVector))]) {
         // "{dx, dy}"
-        ret = [NSValue valueWithCGVector:CGVectorFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(CGSize))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithCGVector:CGVectorFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(CGSize))]) {
         // "{w, h}"
-        ret = [NSValue valueWithCGSize:CGSizeFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(CGRect))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithCGSize:CGSizeFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(CGRect))]) {
         // "{{x,y},{w, h}}"
-        ret = [NSValue valueWithCGRect:CGRectFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(CGAffineTransform))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithCGRect:CGRectFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(CGAffineTransform))]) {
         // "{a, b, c, d, tx, ty}"
-        ret = [NSValue valueWithCGAffineTransform:CGAffineTransformFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(UIEdgeInsets))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ?  [NSValue valueWithCGAffineTransform:CGAffineTransformFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(UIEdgeInsets))]) {
         // "{top, left, bottom, right}"
-        ret = [NSValue valueWithUIEdgeInsets:UIEdgeInsetsFromString(value)];
-    }
-    else if ([typeNameString isEqualToString:@(@encode(UIOffset))]) {
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithUIEdgeInsets:UIEdgeInsetsFromString(value)] : nil;
+    } else if ([typeNameString isEqualToString:@(@encode(UIOffset))]) {
         // "{horizontal, vertical}"
-        ret = [NSValue valueWithUIOffset:UIOffsetFromString(value)];
+        NSAssert(isStringValue, @"property type %@ doesn't match value type %@", typeNameString, NSStringFromClass(((NSObject *)value).class));
+        ret = isStringValue ? [NSValue valueWithUIOffset:UIOffsetFromString(value)] : nil;
     }
     
     return ret;
@@ -362,8 +381,7 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
         NSString *key = allKeys[i];
         if (i < count - 1) {
             [fmt appendFormat:@"%@==%%@&&", key];
-        }
-        else {
+        } else {
             [fmt appendFormat:@"%@==%%@", key];
         }
     }
@@ -392,8 +410,7 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
             if (nil != childDTO) {
                 [childObjects addObject:childDTO];
             }
-        }
-        else {
+        } else {
             [childObjects addObject:child];
         }
     }
@@ -469,8 +486,7 @@ static NSMutableDictionary *s_propertyScalaTypeByClassAndPropertyName;
                 s_propertyClassByClassAndPropertyName[key] = className;
                 [s_recursiveLock unlock];
                 return NSClassFromString(className);
-            }
-            else {
+            } else {
                 s_propertyScalaTypeByClassAndPropertyName[key] = className;
             }
         }

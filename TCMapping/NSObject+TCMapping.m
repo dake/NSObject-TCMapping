@@ -23,29 +23,35 @@
 #endif
 
 
-// TODO:
+@interface TCMappingMeta : NSObject
+{
+@public
+    NSString *_typeName;
+    BOOL _isObj;
+}
 
-//@interface TCMappingMeta : NSObject
-//{
-//    @protected
-//    NSString *_typeName;
-//    BOOL _isObj;
-//}
-//
-//@end
-//
-//@implementation TCMappingMeta
-//
-//
-//@end
+@end
+
+@implementation TCMappingMeta
+
+@end
+
+
+NS_INLINE Class classForMeta(TCMappingMeta *meta)
+{
+    if ((id)kCFNull != meta && nil != meta && meta->_isObj) {
+        return NSClassFromString(meta->_typeName);
+    }
+    
+    return Nil;
+}
+
 
 
 static NSRecursiveLock *s_recursiveLock;
-static NSMutableDictionary *s_propertyClassByClassAndPropertyName;
 static NSMutableDictionary *s_writablePropertyByClass;
 
-
-static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
+static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
 {
     if (Nil == klass || klass == NSObject.class) {
         return nil;
@@ -54,20 +60,19 @@ static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         s_writablePropertyByClass = [NSMutableDictionary dictionary];
-        s_propertyClassByClassAndPropertyName = [NSMutableDictionary dictionary];
         s_recursiveLock = [[NSRecursiveLock alloc] init];
     });
     
     NSString *key = NSStringFromClass(klass);
     
     [s_recursiveLock lock];
-    NSMutableArray *propertyNames = s_writablePropertyByClass[key];
+    NSMutableDictionary *propertyNames = s_writablePropertyByClass[key];
     if (nil != propertyNames) {
         [s_recursiveLock unlock];
         return propertyNames;
     }
     
-    propertyNames = [NSMutableArray array];
+    propertyNames = [NSMutableDictionary dictionary];
     unsigned int num = 0;
     objc_property_t *properties = class_copyPropertyList(klass, &num);
     for (NSInteger i = 0; i < num; ++i) {
@@ -92,7 +97,7 @@ static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
                         typeName = @((attribute + 3));
                     } else {
                         isObj = NO;
-                        if (len > 5 && attribute[1] == '{') { // CGRect等, 含 '{'
+                        if (len > 5 && attribute[1] == '{') { // CGRect. etc contains '{'
                             typeName = @((attribute + 1));
                         }
                     }
@@ -124,24 +129,21 @@ static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
         if (isWritable) {
             NSString *propertyName = [NSString stringWithUTF8String:property_getName(properties[i])];
             // TODO: custom set method
-            if (nil != properties) {
-                [propertyNames addObject:propertyName];
-                
+            if (nil != propertyName) {
+                TCMappingMeta *meta = nil;
                 if (nil != typeName) {
-                    NSString *key = NSStringFromClass(klass);
-                    NSMutableDictionary *dic = s_propertyClassByClassAndPropertyName[key];
-                    if (nil == dic) {
-                        dic = NSMutableDictionary.dictionary;
-                        s_propertyClassByClassAndPropertyName[key] = dic;
-                    }
-                    dic[propertyName] = @[typeName, @(isObj)];
+                    meta = [[TCMappingMeta alloc] init];
+                    meta->_typeName = typeName;
+                    meta->_isObj = isObj;
                 }
+                
+                propertyNames[propertyName] = meta ?: (id)kCFNull;
             }
         }
     }
     free(properties);
     
-    [propertyNames addObjectsFromArray:readwritePropertyListUntilNSObjectFrom(class_getSuperclass(klass))];
+    [propertyNames addEntriesFromDictionary:readwritePropertyListUntilNSObjectFrom(class_getSuperclass(klass))];
     s_writablePropertyByClass[key] = propertyNames;
     
     [s_recursiveLock unlock];
@@ -150,36 +152,6 @@ static NSArray *readwritePropertyListUntilNSObjectFrom(Class klass)
 
 
 #pragma mark - MappingRuntimeHelper
-
-// FIXME: slow
-static Class propertyClassForPropertyName(NSString *propertyName, Class klass, NSString **typeNameString)
-{
-    if (Nil == klass || klass == NSObject.class || nil == propertyName) {
-        return Nil;
-    }
-    
-    [s_recursiveLock lock];
-    
-    NSString *key = NSStringFromClass(klass);
-    __unsafe_unretained NSDictionary *dic = s_propertyClassByClassAndPropertyName[key];
-    __unsafe_unretained NSArray *arry = dic[propertyName];
-    if (nil != arry) {
-        __unsafe_unretained NSString *value = arry.firstObject;
-        if (NULL != typeNameString) {
-            *typeNameString = value;
-        }
-        
-        __unsafe_unretained Class retClass = Nil;
-        if ([arry.lastObject boolValue]) {
-            retClass = NSClassFromString(value);
-        }
-        [s_recursiveLock unlock];
-        return retClass;
-    }
-
-    [s_recursiveLock unlock];
-    return propertyClassForPropertyName(propertyName, class_getSuperclass(klass), typeNameString);
-}
 
 NS_INLINE id mappingNSValueWithString(NSString *value, const char *typeNameString)
 {
@@ -212,47 +184,56 @@ NS_INLINE id mappingNSValueWithString(NSString *value, const char *typeNameStrin
     return ret;
 }
 
-static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, Class currentClass)
+static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMappingMeta *meta)
 {
+    if ((id)kCFNull == meta || nil == meta) {
+        return value;
+    }
+    
     id ret = value;
     
-    NSString *typeNameString = nil;
-    Class klass = propertyClassForPropertyName(propertyName, currentClass, &typeNameString);
-    if (nil == typeNameString) {
-        return ret;
-    }
-    
-    if ([typeNameString hasPrefix:@"{"]) {
-        // NSValue <- NSString
-        ret = mappingNSValueWithString(ret ,typeNameString.UTF8String);
-    }
-    
-    if (nil == ret || Nil == klass) {
-        return ret;
-    }
-    
-    if ([klass isSubclassOfClass:NSString.class]) {
-        // NSString <- non NSString
-        BOOL isStringValue = [ret isKindOfClass:NSString.class];
-        NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
-        if (!isStringValue) {
-            ret = [NSString stringWithFormat:@"%@", ret];
-        }
+    if (meta->_isObj) {
+        Class klass = NSClassFromString(meta->_typeName);
         
-        // [klass isSubclassOfClass:NSMutableString.class]
-        if (klass != NSString.class) {
-            ret = [klass stringWithString:ret];
+        if (Nil == klass) {
+            
+        } else if ([klass isSubclassOfClass:NSNumber.class]) {
+            if (![ret isKindOfClass:NSNumber.class]) {
+                NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+                if ([ret isKindOfClass:NSString.class]) {
+                    // NSNumber <- NSString
+                    ret = [klass numberWithDouble:((NSString *)value).doubleValue];
+                } else {
+                    ret = nil;
+                }
+            }
         }
-        
-    } else if ([klass isSubclassOfClass:NSNumber.class]) {
-        if (![ret isKindOfClass:NSNumber.class]) {
-            NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
-            if ([ret isKindOfClass:NSString.class]) {
-                // NSNumber <- NSString
-                ret = [klass numberWithDouble:((NSString *)value).doubleValue];
-            } else {
+        else if ([klass isSubclassOfClass:NSString.class]) {
+            // NSString <- non NSString
+            BOOL isStringValue = [ret isKindOfClass:NSString.class];
+            NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+            if (!isStringValue) {
+                ret = [NSString stringWithFormat:@"%@", ret];
+            }
+            
+            // [klass isSubclassOfClass:NSMutableString.class]
+            if (klass != NSString.class) {
+                ret = [klass stringWithString:ret];
+            }
+        } else if ([klass isSubclassOfClass:NSValue.class]) {
+            if (![ret isMemberOfClass:klass]) {
+                NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
                 ret = nil;
             }
+        } else if ([klass isSubclassOfClass:NSDate.class]) {
+            // TODO: NSDate <-- timestamp, string
+        }
+        
+    } else {
+        
+        if ([meta->_typeName hasPrefix:@"{"]) {
+            // NSValue <- NSString
+            ret = mappingNSValueWithString(ret ,meta->_typeName.UTF8String);
         }
     }
     
@@ -337,17 +318,19 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, Class
         inputMappingDic = currentClass.propertyNameMapping;
     }
     
-    __unsafe_unretained NSArray *systemWritableProperties = readwritePropertyListUntilNSObjectFrom(currentClass);
+    __unsafe_unretained NSDictionary *sysWritablePropertiesMeta = readwritePropertyListUntilNSObjectFrom(currentClass);
+    NSArray *sysWritableProperties = sysWritablePropertiesMeta.allKeys;
+    
     // filter out readonly property
     NSMutableDictionary *readOnlyInput = inputMappingDic.mutableCopy;
-    [readOnlyInput removeObjectsForKeys:systemWritableProperties];
+    [readOnlyInput removeObjectsForKeys:sysWritableProperties];
     NSDictionary *writableInput = inputMappingDic;
     if (readOnlyInput.count > 0) {
         writableInput = inputMappingDic.mutableCopy;
         [(NSMutableDictionary *)writableInput removeObjectsForKeys:readOnlyInput.allKeys];
     }
     
-    NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:systemWritableProperties forKeys:systemWritableProperties];
+    NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:sysWritableProperties forKeys:sysWritableProperties];
     [tmpDic removeObjectsForKeys:writableInput.allKeys];
     [tmpDic addEntriesFromDictionary:writableInput];
     inputMappingDic = tmpDic;
@@ -376,7 +359,9 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, Class
                 __unsafe_unretained NSString *klassName = typeMappingDic[propertyName];
                 Class klass = Nil;
                 if (nil == klassName) {
-                    klass = propertyClassForPropertyName(propertyName, currentClass, NULL);
+                    
+                    klass = classForMeta(sysWritablePropertiesMeta[propertyName]);
+                    //                    klass = propertyClassForPropertyName(propertyName, currentClass, NULL);
                 } else {
                     klass = NSClassFromString(klassName);
                 }
@@ -398,7 +383,7 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, Class
                 if (Nil != arrayItemType) {
                     value = [arrayItemType mappingArray:value withContext:context];
                 } else {
-                    arrayItemType = propertyClassForPropertyName(propertyName, currentClass, NULL);
+                    arrayItemType = classForMeta(sysWritablePropertiesMeta[propertyName]);
                     if (![arrayItemType isSubclassOfClass:NSArray.class]) {
                         value = nil;
                     } else if (arrayItemType != ((NSObject *)value).class) {
@@ -409,7 +394,7 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, Class
                 value = nil;
             }
         } else {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, currentClass);
+            value = valueForBaseTypeOfPropertyName(propertyName, value, sysWritablePropertiesMeta[propertyName]);
         }
         
         

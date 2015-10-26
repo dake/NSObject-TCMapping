@@ -1,0 +1,30 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "71BF1309593F415B96D2CB8562C555FFEB6F8E42",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "C3339B365A7E5D6D5058E70B093D4E7EA5F9D6A9" : 0,
+    "71BF1309593F415B96D2CB8562C555FFEB6F8E42" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "44690766-A7C7-4C91-AFA1-A0E1B7B812B2",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "C3339B365A7E5D6D5058E70B093D4E7EA5F9D6A9" : "YYModel\/",
+    "71BF1309593F415B96D2CB8562C555FFEB6F8E42" : "NSObject-TCMapping\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "ModelBenchmark",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "ModelBenchmark.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/dake\/NSObject-TCMapping.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "71BF1309593F415B96D2CB8562C555FFEB6F8E42"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:ibireme\/YYModel.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "C3339B365A7E5D6D5058E70B093D4E7EA5F9D6A9"
+    }
+  ]
+}

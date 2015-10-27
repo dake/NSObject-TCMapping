@@ -52,12 +52,18 @@
 - (NSDictionary *)convertToJSONDictionary;
 @end
 
-@interface TCGHUser : NSObject
+@interface TestBaseModel : NSObject <NSCoding>
+
 @property (nonatomic, strong) NSString *login;
 @property (nonatomic, assign) UInt64 userID;
 @property (nonatomic, strong) NSString *htmlURL;
 
-@property (nonatomic, strong) NSString *avatarURL;
+@end
+
+@interface TCGHUser : TestBaseModel
+
+
+@property (nonatomic, strong) NSURL *avatarURL;
 @property (nonatomic, strong) NSString *gravatarID;
 @property (nonatomic, strong) NSString *url;
 
@@ -85,6 +91,7 @@
 @property (nonatomic, assign) UInt32 following;
 @property (nonatomic, strong) NSDate *createdAt;
 @property (nonatomic, strong) NSDate *updatedAt;
+@property (nonatomic, strong) NSDate *testDate;
 @property (nonatomic, strong) NSValue *test;
 @end
 
@@ -92,10 +99,12 @@
 @interface YYGHUser : NSObject <NSCoding>
 @property (nonatomic, strong) NSString *login;
 @property (nonatomic, assign) UInt64 userID;
+@property (nonatomic, strong) NSString *htmlURL;
+
 @property (nonatomic, strong) NSString *avatarURL;
 @property (nonatomic, strong) NSString *gravatarID;
 @property (nonatomic, strong) NSString *url;
-@property (nonatomic, strong) NSString *htmlURL;
+
 @property (nonatomic, strong) NSString *followersURL;
 @property (nonatomic, strong) NSString *followingURL;
 @property (nonatomic, strong) NSString *gistsURL;

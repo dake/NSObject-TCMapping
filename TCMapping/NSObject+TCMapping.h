@@ -32,14 +32,14 @@
  
  @return the mapping dictionary
  */
-+ (NSDictionary *)propertyNameMapping;
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyNameMapping;
 
 /**
  @brief	format: @{@"propertyName": @"object'class name"}
  
  @return the mapping dictionary
  */
-+ (NSDictionary *)propertyTypeFormat;
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyTypeFormat;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": [NSNull null]}
@@ -47,7 +47,7 @@
  
  @return the primary key dictionary
  */
-+ (NSDictionary *)propertyForPrimaryKey;
++ (NSDictionary<__kindof NSString *, __kindof NSObject *> *)propertyForPrimaryKey;
 
 
 + (NSMutableArray *)mappingWithArray:(NSArray *)arry;
@@ -55,6 +55,9 @@
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic;
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
+
++ (NSTimeZone *)dateTimeZone;
++ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic;
 - (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;

@@ -23,11 +23,41 @@
 #endif
 
 
+#define NO_ASSERT
+
+#ifdef NO_ASSERT
+
+#ifdef NSCAssert
+#undef NSCAssert
+#endif
+
+#define NSCAssert(...) ;
+
+#endif
+
+
+typedef NS_ENUM (NSUInteger, TCMappingClassType) {
+    kTCMappingClassTypeUnknown = 0,
+    kTCMappingClassTypeNSString,
+    kTCMappingClassTypeNSMutableString,
+    kTCMappingClassTypeNSValue,
+    kTCMappingClassTypeNSNumber,
+    kTCMappingClassTypeNSDate,
+    kTCMappingClassTypeNSURL,
+    kTCMappingClassTypeNSArray,
+    kTCMappingClassTypeNSMutableArray,
+    kTCMappingClassTypeNSDictionary,
+    kTCMappingClassTypeNSMutableDictionary,
+};
+
+
 @interface TCMappingMeta : NSObject
 {
 @public
     NSString *_typeName;
     BOOL _isObj;
+    
+    TCMappingClassType _classType;
 }
 
 @end
@@ -46,16 +76,30 @@ NS_INLINE Class classForMeta(TCMappingMeta *meta)
     return Nil;
 }
 
-
-
-static NSRecursiveLock *s_recursiveLock;
-static NSMutableDictionary *s_writablePropertyByClass;
+NS_INLINE Class classForType(id type)
+{
+    if (nil == type) {
+        return Nil;
+    }
+    
+    if (class_isMetaClass(object_getClass(type))) {
+        return type;
+    }
+    else if ([type isKindOfClass:NSString.class]) {
+        return NSClassFromString(type);
+    }
+    
+    return Nil;
+}
 
 static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
 {
     if (Nil == klass || klass == NSObject.class) {
         return nil;
     }
+    
+    static NSRecursiveLock *s_recursiveLock;
+    static NSMutableDictionary *s_writablePropertyByClass;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -75,7 +119,7 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
     propertyNames = [NSMutableDictionary dictionary];
     unsigned int num = 0;
     objc_property_t *properties = class_copyPropertyList(klass, &num);
-    for (NSInteger i = 0; i < num; ++i) {
+    for (unsigned int i = 0; i < num; ++i) {
         
         const char *attributes = property_getAttributes(properties[i]);
         char buffer[1 + strlen(attributes)];
@@ -87,14 +131,21 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
         BOOL isWritable = NULL != attributes;
         NSString *typeName = nil;
         
-        while ((attribute = strsep(&state, ",")) != NULL) {
+        NSInteger j = 0;
+        while (j++ < 2 && (attribute = strsep(&state, ",")) != NULL) {
             switch (attribute[0]) {
                 case 'T': { // type encoding
                     size_t len = strlen(attribute);
-                    if ([@(attribute) hasPrefix:@"T@\""]) {
-                        attribute[len - 1] = '\0';
-                        isObj = YES;
-                        typeName = @((attribute + 3));
+                    if ([@(attribute) hasPrefix:@"T@"]) {
+                        
+                        if (len == 2) {
+                            isObj = NO;
+                            typeName = @"id";
+                        } else {
+                            isObj = YES;
+                            attribute[len - 1] = '\0';
+                            typeName = @((attribute + 3));
+                        }
                     } else {
                         isObj = NO;
                         if (len > 5 && attribute[1] == '{') { // CGRect. etc contains '{'
@@ -105,19 +156,8 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
                     break;
                 }
                     
-                case '@': {
-                    isObj= YES;
-                    typeName = @"id";
-                    break;
-                }
-                    
                 case 'R': { // readonly
                     isWritable = NO;
-                    break;
-                }
-                    
-                case 'S': { // custom setter
-                    isWritable = YES;
                     break;
                 }
                     
@@ -132,6 +172,8 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
             if (nil != propertyName) {
                 TCMappingMeta *meta = nil;
                 if (nil != typeName) {
+                    
+                    // TODO: fill TCMappingClassType
                     meta = [[TCMappingMeta alloc] init];
                     meta->_typeName = typeName;
                     meta->_isObj = isObj;
@@ -152,6 +194,31 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
 
 
 #pragma mark - MappingRuntimeHelper
+
+
+NS_INLINE NSDictionary *nameMappingDicFor(NSDictionary *inputMappingDic, NSArray *sysWritableProperties)
+{
+    if (inputMappingDic.count < 1) {
+        return [NSDictionary dictionaryWithObjects:sysWritableProperties forKeys:sysWritableProperties];
+    }
+    
+    // FIXME: slow
+    // filter out readonly property
+    NSMutableDictionary *readOnlyInput = inputMappingDic.mutableCopy;
+    [readOnlyInput removeObjectsForKeys:sysWritableProperties];
+    NSDictionary *writableInput = inputMappingDic;
+    if (readOnlyInput.count > 0) {
+        writableInput = inputMappingDic.mutableCopy;
+        [(NSMutableDictionary *)writableInput removeObjectsForKeys:readOnlyInput.allKeys];
+    }
+    
+    NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:sysWritableProperties forKeys:sysWritableProperties];
+    [tmpDic removeObjectsForKeys:writableInput.allKeys];
+    [tmpDic addEntriesFromDictionary:writableInput];
+    inputMappingDic = tmpDic;
+    
+    return inputMappingDic;
+}
 
 NS_INLINE id mappingNSValueWithString(NSString *value, const char *typeNameString)
 {
@@ -184,7 +251,20 @@ NS_INLINE id mappingNSValueWithString(NSString *value, const char *typeNameStrin
     return ret;
 }
 
-static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMappingMeta *meta)
+static NSDateFormatter *tcmapping_writeFmter(void)
+{
+    static NSDateFormatter *s_fmt = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        s_fmt = [[NSDateFormatter alloc] init];
+        s_fmt.dateStyle = NSDateFormatterNoStyle;
+        s_fmt.timeStyle = NSDateFormatterNoStyle;
+    });
+    
+    return s_fmt;
+}
+
+NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __unsafe_unretained TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class currentClass)
 {
     if ((id)kCFNull == meta || nil == meta) {
         return value;
@@ -197,36 +277,62 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
         
         if (Nil == klass) {
             
-        } else if ([klass isSubclassOfClass:NSNumber.class]) {
-            if (![ret isKindOfClass:NSNumber.class]) {
-                NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
-                if ([ret isKindOfClass:NSString.class]) {
-                    // NSNumber <- NSString
-                    ret = [klass numberWithDouble:((NSString *)value).doubleValue];
-                } else {
-                    ret = nil;
-                }
-            }
-        }
-        else if ([klass isSubclassOfClass:NSString.class]) {
-            // NSString <- non NSString
+        } else if ([klass isSubclassOfClass:NSString.class]) { // NSString <- non NSString
+            
             BOOL isStringValue = [ret isKindOfClass:NSString.class];
             NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
             if (!isStringValue) {
                 ret = [NSString stringWithFormat:@"%@", ret];
             }
             
-            // [klass isSubclassOfClass:NSMutableString.class]
             if (klass != NSString.class) {
                 ret = [klass stringWithString:ret];
             }
+        } else if ([klass isSubclassOfClass:NSNumber.class]) { // NSNumber <- NSString
+            if (![ret isKindOfClass:NSNumber.class]) {
+                NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+                if ([ret isKindOfClass:NSString.class]) {
+                    ret = [klass numberWithDouble:((NSString *)value).doubleValue];
+                } else {
+                    ret = nil;
+                }
+            }
+            
         } else if ([klass isSubclassOfClass:NSValue.class]) {
             if (![ret isMemberOfClass:klass]) {
-                NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
+                NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
                 ret = nil;
             }
         } else if ([klass isSubclassOfClass:NSDate.class]) {
-            // TODO: NSDate <-- timestamp, string
+            
+            if ([ret isKindOfClass:NSDate.class]) {
+                
+            } else if ([ret isKindOfClass:NSString.class]) { // NSDate <-- NSString
+                NSString *fmtStr = typeMappingDic[propertyName];
+                if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
+                    NSDateFormatter *fmt = tcmapping_writeFmter();
+                    fmt.timeZone = [currentClass dateTimeZone];
+                    fmt.dateFormat = fmtStr;
+                    ret = [fmt dateFromString:ret];
+                    
+                } else {
+                    ret = nil;
+                }
+            } else if ([ret isKindOfClass:NSNumber.class]) { // NSDate <-- timestamp
+                NSTimeInterval timestamp = [currentClass timestampToSecondSince1970:((NSNumber *)ret).doubleValue];
+                ret = [NSDate dateWithTimeIntervalSince1970:timestamp];
+            } else {
+                ret = nil;
+            }
+        } else if ([klass isSubclassOfClass:NSURL.class]) { // NSURL <-- NSString
+            if ([ret isKindOfClass:NSURL.class]) {
+                
+            } else if ([ret isKindOfClass:NSString.class]) {
+                ret = [klass URLWithString:ret];
+                
+            } else {
+                ret = nil;
+            }
         }
         
     } else {
@@ -249,19 +355,29 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
     return YES;
 }
 
-+ (NSDictionary *)propertyNameMapping
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyNameMapping
 {
     return nil;
 }
 
-+ (NSDictionary *)propertyTypeFormat
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyTypeFormat
 {
     return nil;
 }
 
-+ (NSDictionary *)propertyForPrimaryKey
++ (NSDictionary<__kindof NSString *, __kindof NSObject *> *)propertyForPrimaryKey
 {
     return nil;
+}
+
++ (NSTimeZone *)dateTimeZone
+{
+    return nil;
+}
+
++ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp
+{
+    return timestamp;
 }
 
 + (NSMutableArray *)mappingWithArray:(NSArray *)arry
@@ -290,18 +406,19 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic
 {
-    return [self mappingWithDictionary:dic managerObjectContext:nil];
+    return [self mappingWithDictionary:dic propertyMapping:nil context:nil targetBlock:nil useInputPropertyDicOnly:NO];
 }
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
 {
-    return [self mappingWithDictionary:dic propertyNameMapping:nil managerObjectContext:context targetBlock:nil];
+    return [self mappingWithDictionary:dic propertyMapping:nil context:context targetBlock:nil useInputPropertyDicOnly:NO];
 }
 
 + (instancetype)mappingWithDictionary:(NSDictionary *)dataDic
-                  propertyNameMapping:(NSDictionary *)extraNameMappingDic
-                 managerObjectContext:(NSManagedObjectContext *)context
+                      propertyMapping:(NSDictionary *)inputPropertyDic
+                              context:(NSManagedObjectContext *)context
                           targetBlock:(id(^)(void))targetBlock
+              useInputPropertyDicOnly:(BOOL)useInputPropertyDicOnly
 {
     if (nil == dataDic || ![dataDic isKindOfClass:NSDictionary.class] || dataDic.count < 1) {
         return nil;
@@ -313,39 +430,24 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
     }
     Class currentClass = obj.class ?: self;
     
-    NSDictionary *inputMappingDic = extraNameMappingDic;
-    if (inputMappingDic.count < 1) {
-        inputMappingDic = currentClass.propertyNameMapping;
-    }
-    
-    __unsafe_unretained NSDictionary *sysWritablePropertiesMeta = readwritePropertyListUntilNSObjectFrom(currentClass);
-    NSArray *sysWritableProperties = sysWritablePropertiesMeta.allKeys;
-    
-    // filter out readonly property
-    NSMutableDictionary *readOnlyInput = inputMappingDic.mutableCopy;
-    [readOnlyInput removeObjectsForKeys:sysWritableProperties];
-    NSDictionary *writableInput = inputMappingDic;
-    if (readOnlyInput.count > 0) {
-        writableInput = inputMappingDic.mutableCopy;
-        [(NSMutableDictionary *)writableInput removeObjectsForKeys:readOnlyInput.allKeys];
-    }
-    
-    NSMutableDictionary *tmpDic = [NSMutableDictionary dictionaryWithObjects:sysWritableProperties forKeys:sysWritableProperties];
-    [tmpDic removeObjectsForKeys:writableInput.allKeys];
-    [tmpDic addEntriesFromDictionary:writableInput];
-    inputMappingDic = tmpDic;
-    
-    NSDictionary *nameMappingDic = inputMappingDic;
     NSDictionary *typeMappingDic = currentClass.propertyTypeFormat;
+    NSDictionary *nameMappingDic = inputPropertyDic;
+    __unsafe_unretained NSDictionary *sysWritablePropertiesMeta = readwritePropertyListUntilNSObjectFrom(currentClass);
     
+    if (!useInputPropertyDicOnly || inputPropertyDic.count < 1) {
+        NSDictionary *inputMappingDic = inputPropertyDic;
+        if (inputMappingDic.count < 1) {
+            inputMappingDic = currentClass.propertyNameMapping;
+        }
+        nameMappingDic = nameMappingDicFor(inputMappingDic, sysWritablePropertiesMeta.allKeys);
+    }
     
-    for (__unsafe_unretained NSString *propertyName in nameMappingDic.allKeys) {
+    for (__unsafe_unretained NSString *propertyName in nameMappingDic) {
         if (nil == propertyName || (id)kCFNull == propertyName) {
             continue;
         }
         
-        __unsafe_unretained id jsonKey = nameMappingDic[propertyName];
-        id value = dataDic[jsonKey];
+        NSObject *value = dataDic[nameMappingDic[propertyName]];
         if (nil == value) {
             value = dataDic[propertyName];
         }
@@ -354,47 +456,55 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
         }
         
         if ([value isKindOfClass:NSDictionary.class]) {
-            if ([(NSDictionary *)value count] > 0) {
-                
-                __unsafe_unretained NSString *klassName = typeMappingDic[propertyName];
-                Class klass = Nil;
-                if (nil == klassName) {
-                    
-                    klass = classForMeta(sysWritablePropertiesMeta[propertyName]);
-                    //                    klass = propertyClassForPropertyName(propertyName, currentClass, NULL);
-                } else {
-                    klass = NSClassFromString(klassName);
-                }
-                
-                if (Nil != klass) {
-                    value = [klass mappingWithDictionary:value propertyNameMapping:nil managerObjectContext:context targetBlock:nil == obj ? nil : ^{
-                        return [obj valueForKey:propertyName];
-                    }];
-                } else {
+            __unsafe_unretained NSDictionary *valueDataDic = (NSDictionary *)value;
+            if (valueDataDic.count > 0) {
+                __unsafe_unretained Class klass = classForMeta(sysWritablePropertiesMeta[propertyName]);
+                if (Nil == klass) {
                     value = nil;
+                } else if ([klass isSubclassOfClass:NSDictionary.class]) {
+                    __unsafe_unretained Class dicValueClass = classForType(typeMappingDic[propertyName]);
+                    if (Nil != dicValueClass) {
+                        NSMutableDictionary *tmpDic = [NSMutableDictionary dictionary];
+                        NSDictionary *dicValueMappingDic = nameMappingDicFor(dicValueClass.propertyNameMapping, readwritePropertyListUntilNSObjectFrom(dicValueClass).allKeys);
+                        for (id dicKey in valueDataDic) {
+                            id tmpValue = [dicValueClass mappingWithDictionary:valueDataDic[dicKey] propertyMapping:dicValueMappingDic context:context targetBlock:nil useInputPropertyDicOnly:YES];
+                            if (nil != tmpValue) {
+                                tmpDic[dicKey] = tmpValue;
+                            }
+                        }
+                        
+                        value = tmpDic.count > 0 ? [klass dictionaryWithDictionary:tmpDic] : nil;
+                    } else if (valueDataDic.class != klass) {
+                        value = [klass dictionaryWithDictionary:valueDataDic];
+                    }
+                } else {
+                    value = [klass mappingWithDictionary:valueDataDic propertyMapping:nil context:context targetBlock:nil == obj ? nil : ^{
+                        return [obj valueForKey:propertyName];
+                    } useInputPropertyDicOnly:NO];
                 }
             } else {
                 value = nil;
             }
             
         } else if ([value isKindOfClass:NSArray.class]) {
-            if ([(NSArray *)value count] > 0) {
-                Class arrayItemType = NSClassFromString(typeMappingDic[propertyName]);
+            __unsafe_unretained NSArray *valueDataArry = (NSArray *)value;
+            if (valueDataArry.count > 0) {
+                __unsafe_unretained Class arrayItemType = classForType(typeMappingDic[propertyName]);
                 if (Nil != arrayItemType) {
-                    value = [arrayItemType mappingArray:value withContext:context];
+                    value = [arrayItemType mappingArray:valueDataArry withContext:context];
                 } else {
                     arrayItemType = classForMeta(sysWritablePropertiesMeta[propertyName]);
                     if (![arrayItemType isSubclassOfClass:NSArray.class]) {
                         value = nil;
-                    } else if (arrayItemType != ((NSObject *)value).class) {
-                        value = [arrayItemType arrayWithArray:value];
+                    } else if (arrayItemType != valueDataArry.class) {
+                        value = [arrayItemType arrayWithArray:valueDataArry];
                     }
                 }
             } else {
                 value = nil;
             }
         } else {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, sysWritablePropertiesMeta[propertyName]);
+            value = valueForBaseTypeOfPropertyName(propertyName, value, sysWritablePropertiesMeta[propertyName], typeMappingDic, currentClass);
         }
         
         
@@ -419,7 +529,7 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
 + (instancetype)coreDataInstanceWithValue:(NSDictionary *)value withNameMappingDic:(NSDictionary *)nameMappingDic withContext:(NSManagedObjectContext *)context
 {
     NSMutableDictionary *primaryKey = self.propertyForPrimaryKey.mutableCopy;
-    for (NSString *pKey in primaryKey.allKeys) {
+    for (NSString *pKey in primaryKey) {
         id tmpValue = value[nameMappingDic[pKey]];
         if (nil != tmpValue && tmpValue != (id)kCFNull) {
             primaryKey[pKey] = tmpValue;
@@ -494,9 +604,9 @@ static id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, TCMap
 
 - (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic
 {
-    [self.class mappingWithDictionary:dic propertyNameMapping:extraNameMappingDic managerObjectContext:nil targetBlock:^{
+    [self.class mappingWithDictionary:dic propertyMapping:extraNameMappingDic context:nil targetBlock:^{
         return self;
-    }];
+    } useInputPropertyDicOnly:NO];
 }
 
 

@@ -15,6 +15,8 @@
 #import "MTWeiboModel.h"
 #import "JSWeiboModel.h"
 #import "MJWeiboModel.h"
+#import "TCWeiboModel.h"
+
 //#import "ModelBenchmark-Swift.h"
 
 /*
@@ -32,10 +34,10 @@
     
     [super viewDidLoad];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self benchmarkGithubUser];
-//        [self benchmarkWeiboStatus];
+//        [self benchmarkGithubUser];
+        [self benchmarkWeiboStatus];
         
-        [self testRobustness];
+//        [self testRobustness];
     });
 }
 
@@ -65,27 +67,27 @@
     /// warm up (NSDictionary's hot cache, and JSON to model framework cache)
     FEMMapping *mapping = [FEGHUser defaultMapping];
     MTLJSONAdapter *adapter = [[MTLJSONAdapter alloc] initWithModelClass:[MTGHUser class]];
-    @autoreleasepool {
-        for (int i = 0; i < count; i++) {
+//    @autoreleasepool {
+//        for (int i = 0; i < count; i++) {
             // Manually
-            [[[[GHUser alloc] initWithJSONDictionary:json] description] length];
-            
+//            [[[[GHUser alloc] initWithJSONDictionary:json] description] length];
+    
             // YYModel
-            [YYGHUser yy_modelWithJSON:json];
-            
+//            [YYGHUser yy_modelWithJSON:json];
+//
             // FastEasyMapping
-            [FEMDeserializer fillObject:[FEGHUser new] fromRepresentation:json mapping:mapping];
-            
+//            [FEMDeserializer fillObject:[FEGHUser new] fromRepresentation:json mapping:mapping];
+    
             // JSONModel
-            [[[[JSGHUser alloc] initWithDictionary:json error:nil] description] length];
+//            [[[[JSGHUser alloc] initWithDictionary:json error:nil] description] length];
             
             // Mantle
-            [adapter modelFromJSONDictionary:json error:nil];
+//            [adapter modelFromJSONDictionary:json error:nil];
             
             // MJExtension
-            [MJGHUser objectWithKeyValues:json];
-        }
-    }
+//            [MJGHUser objectWithKeyValues:json];
+//        }
+//    }
     /// warm up holder
     NSMutableArray *holder = [NSMutableArray new];
     for (int i = 0; i < 1800; i++) {
@@ -152,6 +154,11 @@
         }
         end = CACurrentMediaTime();
         printf("TCGHUser:        %8.2f   \n", (end - begin) * 1000);
+        
+        TCGHUser *user = [TCGHUser mappingWithDictionary:json];
+        if (user.userID == 0) NSLog(@"error!");
+        if (!user.login) NSLog(@"error!");
+        if (!user.htmlURL) NSLog(@"error");
     }
     
     /*------------------- YYModel -------------------*/
@@ -406,24 +413,24 @@
     /// warm up (NSDictionary's hot cache, and JSON to model framework cache)
     FEMMapping *mapping = [FEWeiboStatus defaultMapping];
     MTLJSONAdapter *adapter = [[MTLJSONAdapter alloc] initWithModelClass:[MTWeiboStatus class]];
-    @autoreleasepool {
-        for (int i = 0; i < count * 2; i++) {
-            // YYModel
-            [YYWeiboStatus yy_modelWithJSON:json];
-            
-            // FastEasyMapping
-            [FEMDeserializer fillObject:[FEWeiboStatus new] fromRepresentation:json mapping:mapping];
-            
-            // JSONModel
-            [[[JSWeiboStatus alloc] initWithDictionary:json error:nil] description];
-            
-            // Mantle
-            [adapter modelFromJSONDictionary:json error:nil];
-            
-            // MJExtension
-            [MJWeiboStatus objectWithKeyValues:json];
-        }
-    }
+//    @autoreleasepool {
+//        for (int i = 0; i < count * 2; i++) {
+//            // YYModel
+//            [YYWeiboStatus yy_modelWithJSON:json];
+//            
+//            // FastEasyMapping
+//            [FEMDeserializer fillObject:[FEWeiboStatus new] fromRepresentation:json mapping:mapping];
+//            
+//            // JSONModel
+//            [[[JSWeiboStatus alloc] initWithDictionary:json error:nil] description];
+//            
+//            // Mantle
+//            [adapter modelFromJSONDictionary:json error:nil];
+//            
+//            // MJExtension
+//            [MJWeiboStatus objectWithKeyValues:json];
+//        }
+//    }
     
     /// warm up holder
     NSMutableArray *holder = [NSMutableArray new];
@@ -431,6 +438,20 @@
         [holder addObject:[NSData new]];
     }
     [holder removeAllObjects];
+    
+    /*------------------- TCModel -------------------*/
+    {
+        [holder removeAllObjects];
+        begin = CACurrentMediaTime();
+        @autoreleasepool {
+            for (int i = 0; i < count; i++) {
+                TCWeiboStatus *feed = [TCWeiboStatus mappingWithDictionary:json];
+                feed = nil;
+            }
+        }
+        end = CACurrentMediaTime();
+        printf("TCModel:         %8.2f   \n", (end - begin) * 1000);
+    }
     
     
     /*------------------- YYModel -------------------*/
@@ -758,7 +779,7 @@
     {
         printf("----------------------\n");
         printf("The property is NSDate, and the json value is string:\n");
-        NSString *jsonStr = @"{\"updated_at\":\"2009-04-02T03:35:22Z\"}";
+        NSString *jsonStr = @"{\"updated_at\":\"2009-04-02T03:35:22Z\", \"testDate\":-3133234}";
         NSDictionary *json = [NSJSONSerialization JSONObjectWithData:[jsonStr dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:nil];
         
         void (^logError)(NSString *model, id user) = ^(NSString *model, id user){
@@ -783,6 +804,14 @@
         
         TCGHUser *tcUser = [TCGHUser mappingWithDictionary:json];
         logError(@"TCGHUser:       ", tcUser);
+        NSDate *date = tcUser.testDate;
+        if (date == nil || date == (id)[NSNull null]) {
+            printf("⚠️ property is nil\n");
+        } else if ([date isKindOfClass:[NSDate class]]) {
+            printf("✅ property is %s\n",NSStringFromClass(date.class).UTF8String);
+        } else {
+            printf("🚫 property is %s\n",NSStringFromClass(date.class).UTF8String);
+        }
         
         // FastEasyMapping
         FEGHUser *feUser = [FEGHUser new];

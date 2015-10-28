@@ -44,6 +44,7 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     kTCMappingClassTypeNSArray,
     kTCMappingClassTypeNSDictionary,
     
+    kTCMappingClassTypeId, // id type
     kTCMappingClassTypeBaseScalar, // int, double, etc...
     
     kTCMappingClassTypeCGPoint,
@@ -88,6 +89,27 @@ NS_INLINE Class classForType(id type)
     return Nil;
 }
 
+NS_INLINE TCMappingClassType classTypeForStructType(const char *typeNameString)
+{
+    if (strcmp(typeNameString, @encode(CGPoint)) == 0) {
+        return kTCMappingClassTypeCGPoint;
+    } else if (strcmp(typeNameString, @encode(CGVector)) == 0) {
+        return kTCMappingClassTypeCGVector;
+    } else if (strcmp(typeNameString, @encode(CGSize)) == 0) {
+        return kTCMappingClassTypeCGSize;
+    } else if (strcmp(typeNameString, @encode(CGRect)) == 0) {
+        return kTCMappingClassTypeCGRect;
+    } else if (strcmp(typeNameString, @encode(CGAffineTransform)) == 0) {
+        return kTCMappingClassTypeCGAffineTransform;
+    } else if (strcmp(typeNameString, @encode(UIEdgeInsets)) == 0) {
+        return kTCMappingClassTypeUIEdgeInsets;
+    } else if (strcmp(typeNameString, @encode(UIOffset)) == 0) {
+        return kTCMappingClassTypeUIOffset;
+    } else {
+        return kTCMappingClassTypeBaseScalar;
+    }
+}
+
 static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
 {
     if (Nil == klass || klass == NSObject.class) {
@@ -126,6 +148,7 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
         BOOL isObj = NO;
         BOOL isWritable = NULL != attributes;
         NSString *typeName = nil;
+        TCMappingClassType classType = kTCMappingClassTypeUnknown;
         __unsafe_unretained Class typeClass = Nil;
         
         NSInteger j = 0;
@@ -134,12 +157,11 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
                 case 'T': { // type encoding
                     size_t len = strlen(attribute);
                     if (len >= 2 && attribute[0] == 'T' && attribute[1] == '@') { // [@(attribute) hasPrefix:@"T@"]
-                        
+                        isObj = YES;
                         if (len == 2) {
-                            isObj = NO;
-                            typeName = @"id";
+                            typeName = @((attribute + 1));
+                            classType = kTCMappingClassTypeId;
                         } else {
-                            isObj = YES;
                             attribute[len - 1] = '\0';
                             typeName = @((attribute + 3));
                             typeClass = NSClassFromString(typeName);
@@ -148,6 +170,10 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
                         isObj = NO;
                         if (len > 5 && attribute[1] == '{') { // CGRect. etc contains '{', filer out other scalar type
                             typeName = @((attribute + 1));
+                            classType = classTypeForStructType(attribute + 1);
+                            
+                        } else {
+                            classType = kTCMappingClassTypeBaseScalar;
                         }
                     }
                     
@@ -164,7 +190,7 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
             }
         }
         
-        if (!isWritable || (isObj && Nil == typeClass)) {
+        if (!isWritable || (isObj && classType != kTCMappingClassTypeId && Nil == typeClass)) {
             continue;
         }
         
@@ -176,6 +202,7 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
             meta->_typeName = typeName;
             meta->_isObj = isObj;
             meta->_typeClass = typeClass;
+            meta->_classType = classType;
             
             if (Nil != typeClass) {
                 if ([typeClass isSubclassOfClass:NSString.class]) {
@@ -192,34 +219,6 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
                     meta->_classType = kTCMappingClassTypeNSDate;
                 } else if ([typeClass isSubclassOfClass:NSValue.class]) {
                     meta->_classType = kTCMappingClassTypeNSValue;
-                }
-            } else {
-                const char *typeNameString = typeName.UTF8String;
-                if (NULL == typeNameString) {
-                    meta->_classType = kTCMappingClassTypeBaseScalar;
-                } else if (strcmp(typeNameString, @encode(CGPoint)) == 0) {
-                    // "{x,y}"
-                    meta->_classType = kTCMappingClassTypeCGPoint;
-                } else if (strcmp(typeNameString, @encode(CGVector)) == 0) {
-                    // "{dx, dy}"
-                    meta->_classType = kTCMappingClassTypeCGVector;
-                } else if (strcmp(typeNameString, @encode(CGSize)) == 0) {
-                    // "{w, h}"
-                    meta->_classType = kTCMappingClassTypeCGSize;
-                } else if (strcmp(typeNameString, @encode(CGRect)) == 0) {
-                    // "{{x,y},{w, h}}"
-                    meta->_classType = kTCMappingClassTypeCGRect;
-                } else if (strcmp(typeNameString, @encode(CGAffineTransform)) == 0) {
-                    // "{a, b, c, d, tx, ty}"
-                    meta->_classType = kTCMappingClassTypeCGAffineTransform;
-                } else if (strcmp(typeNameString, @encode(UIEdgeInsets)) == 0) {
-                    // "{top, left, bottom, right}"
-                    meta->_classType = kTCMappingClassTypeUIEdgeInsets;
-                } else if (strcmp(typeNameString, @encode(UIOffset)) == 0) {
-                    // "{horizontal, vertical}"
-                    meta->_classType = kTCMappingClassTypeUIOffset;
-                } else {
-                    meta->_classType = kTCMappingClassTypeBaseScalar;
                 }
             }
             
@@ -574,20 +573,20 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
         } else if ([value isKindOfClass:NSArray.class]) {
             __unsafe_unretained NSArray *valueDataArry = (NSArray *)value;
             if (valueDataArry.count > 0) {
-                __unsafe_unretained Class arrayItemType = classForType(typeMappingDic[propertyName]);
-                if (Nil != arrayItemType) {
-                    value = [arrayItemType mappingArray:valueDataArry withContext:context];
+                
+                __unsafe_unretained TCMappingMeta *meta = sysWritablePropertiesMeta[propertyName];
+                if (Nil == meta->_typeClass || meta->_classType != kTCMappingClassTypeNSArray) {
+                    value = nil;
                 } else {
-                    __unsafe_unretained TCMappingMeta *meta = sysWritablePropertiesMeta[propertyName];
-                    arrayItemType = meta->_typeClass;
-                    if (Nil == arrayItemType || meta->_classType != kTCMappingClassTypeNSArray) {
-                        value = nil;
-                    } else if (arrayItemType != valueDataArry.class) {
-                        value = [arrayItemType arrayWithArray:valueDataArry];
+                    __unsafe_unretained Class arrayItemType = classForType(typeMappingDic[propertyName]);
+                    if (Nil != arrayItemType) {
+                        value = [arrayItemType mappingArray:valueDataArry withContext:context];
+                    }
+                    
+                    if (nil != value && ![value isKindOfClass:meta->_typeClass]) {
+                        value = [arrayItemType arrayWithArray:(NSArray *)value];
                     }
                 }
-            } else {
-                value = nil;
             }
         } else {
             value = valueForBaseTypeOfPropertyName(propertyName, value, sysWritablePropertiesMeta[propertyName], typeMappingDic, currentClass);
@@ -676,7 +675,9 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 [arry addObject:obj];
             }
         } else {
-            [arry addObject:dic];
+            if ([dic isKindOfClass:self]) {
+                [arry addObject:dic];
+            }
         }
     }
     

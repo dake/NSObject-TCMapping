@@ -390,8 +390,13 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                         ret = nil;
                     }
                 } else if ([ret isKindOfClass:NSNumber.class]) { // NSDate <-- timestamp
-                    NSTimeInterval timestamp = [currentClass timestampToSecondSince1970:((NSNumber *)ret).doubleValue];
-                    ret = [NSDate dateWithTimeIntervalSince1970:timestamp];
+                    BOOL ignore = NO;
+                    NSTimeInterval timestamp = [currentClass timestampToSecondSince1970:((NSNumber *)ret).doubleValue ignoreReturn:&ignore];
+                    if (ignore) {
+                        ret = nil;
+                    } else {
+                        ret = [NSDate dateWithTimeIntervalSince1970:timestamp];
+                    }
                 } else {
                     ret = nil;
                 }
@@ -457,7 +462,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     return nil;
 }
 
-+ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp
++ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore
 {
     return timestamp;
 }

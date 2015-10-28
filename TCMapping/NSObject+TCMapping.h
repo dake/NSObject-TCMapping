@@ -57,7 +57,7 @@
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
 
 + (NSTimeZone *)dateTimeZone;
-+ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp;
++ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic;
 - (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;

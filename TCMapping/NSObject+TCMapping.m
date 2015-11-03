@@ -310,7 +310,7 @@ NS_INLINE id mappingNSValueWithString(NSString *value, __unsafe_unretained TCMap
     return ret;
 }
 
-static NSDateFormatter *tcmapping_writeFmter(void)
+static NSDateFormatter *tc_mapping_date_write_fmter(void)
 {
     static NSDateFormatter *s_fmt = nil;
     static dispatch_once_t onceToken;
@@ -318,6 +318,18 @@ static NSDateFormatter *tcmapping_writeFmter(void)
         s_fmt = [[NSDateFormatter alloc] init];
         s_fmt.dateStyle = NSDateFormatterNoStyle;
         s_fmt.timeStyle = NSDateFormatterNoStyle;
+    });
+    
+    return s_fmt;
+}
+
+static NSNumberFormatter *tc_mapping_number_fmter(void)
+{
+    static NSNumberFormatter *s_fmt = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        s_fmt = [[NSNumberFormatter alloc] init];
+        s_fmt.numberStyle = NSNumberFormatterDecimalStyle;
     });
     
     return s_fmt;
@@ -355,7 +367,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 if (![ret isKindOfClass:NSNumber.class]) {
                     NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass(((NSObject *)ret).class));
                     if ([ret isKindOfClass:NSString.class]) {
-                        ret = [klass numberWithDouble:((NSString *)value).doubleValue];
+                        ret = [tc_mapping_number_fmter() numberFromString:(NSString *)ret];
                     } else {
                         ret = nil;
                     }
@@ -381,7 +393,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 } else if ([ret isKindOfClass:NSString.class]) { // NSDate <-- NSString
                     NSString *fmtStr = typeMappingDic[propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
-                        NSDateFormatter *fmt = tcmapping_writeFmter();
+                        NSDateFormatter *fmt = tc_mapping_date_write_fmter();
                         fmt.timeZone = [currentClass dateTimeZone];
                         fmt.dateFormat = fmtStr;
                         ret = [fmt dateFromString:ret];

@@ -601,7 +601,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     }
                     
                     if (nil != value && ![value isKindOfClass:meta->_typeClass]) {
-                        value = [arrayItemType arrayWithArray:(NSArray *)value];
+                        value = [meta->_typeClass arrayWithArray:(NSArray *)value];
                     }
                 }
             }

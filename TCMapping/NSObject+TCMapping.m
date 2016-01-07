@@ -394,7 +394,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     NSString *fmtStr = typeMappingDic[propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
                         NSDateFormatter *fmt = tc_mapping_date_write_fmter();
-                        fmt.timeZone = [currentClass dateTimeZone];
+                        fmt.timeZone = [currentClass tc_dateTimeZone];
                         fmt.dateFormat = fmtStr;
                         ret = [fmt dateFromString:ret];
                         
@@ -469,7 +469,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     return nil;
 }
 
-+ (NSTimeZone *)dateTimeZone
++ (NSTimeZone *)tc_dateTimeZone
 {
     return nil;
 }

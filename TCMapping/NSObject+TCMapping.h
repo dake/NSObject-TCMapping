@@ -35,7 +35,7 @@
 + (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyNameMapping;
 
 /**
- @brief	format: @{@"propertyName": @"object'class name"}
+ @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
  
  @return the mapping dictionary
  */
@@ -56,7 +56,7 @@
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic;
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
 
-+ (NSTimeZone *)dateTimeZone;
++ (NSTimeZone *)tc_dateTimeZone;
 + (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic;

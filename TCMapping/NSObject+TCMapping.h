@@ -42,7 +42,7 @@
 + (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyTypeFormat;
 
 /**
- @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": [NSNull null]}
+ @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
  [NSNull null] will be replace with an exact value while mapping.
  
  @return the primary key dictionary
@@ -57,7 +57,7 @@
 + (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
 
 + (NSTimeZone *)tc_dateTimeZone;
-+ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
++ (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
 
 - (void)mappingWithDictionary:(NSDictionary *)dic;
 - (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;

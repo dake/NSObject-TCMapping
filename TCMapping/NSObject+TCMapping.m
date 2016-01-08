@@ -403,7 +403,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     }
                 } else if ([ret isKindOfClass:NSNumber.class]) { // NSDate <-- timestamp
                     BOOL ignore = NO;
-                    NSTimeInterval timestamp = [currentClass timestampToSecondSince1970:((NSNumber *)ret).doubleValue ignoreReturn:&ignore];
+                    NSTimeInterval timestamp = [currentClass tc_timestampToSecondSince1970:((NSNumber *)ret).doubleValue ignoreReturn:&ignore];
                     if (ignore) {
                         ret = nil;
                     } else {
@@ -474,8 +474,11 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     return nil;
 }
 
-+ (NSTimeInterval)timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore
++ (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore
 {
+    if (NULL != ignore) {
+        *ignore = timestamp <= 0;
+    }
     return timestamp;
 }
 

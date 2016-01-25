@@ -2,8 +2,8 @@
 //  NSObject+TCMapping.h
 //  TCKit
 //
-//  Created by ChenQi on 13-12-29.
-//  Copyright (c) 2013年 Dake. All rights reserved.
+//  Created by dake on 13-12-29.
+//  Copyright (c) 2013年 dake. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -32,14 +32,14 @@
  
  @return the mapping dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyNameMapping;
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)tc_propertyNameMapping;
 
 /**
  @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
  
  @return the mapping dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSString *> *)propertyTypeFormat;
++ (NSDictionary<__kindof NSString *, __kindof NSString *> *)tc_propertyTypeFormat;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
@@ -47,34 +47,35 @@
  
  @return the primary key dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSObject *> *)propertyForPrimaryKey;
++ (NSDictionary<__kindof NSString *, __kindof NSObject *> *)tc_propertyForPrimaryKey;
 
 
-+ (NSMutableArray *)mappingWithArray:(NSArray *)arry;
-+ (NSMutableArray *)mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context;
++ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;
++ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context;
 
-+ (instancetype)mappingWithDictionary:(NSDictionary *)dic;
-+ (instancetype)mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
++ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic;
++ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
 
 + (NSTimeZone *)tc_dateTimeZone;
 + (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
++ (BOOL)tc_mappingIgnoreNSNull;
 
-- (void)mappingWithDictionary:(NSDictionary *)dic;
-- (void)mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
+- (void)tc_mappingWithDictionary:(NSDictionary *)dic;
+- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
 
-- (BOOL)tc_validate;
+- (BOOL)tc_mappingValidate;
 
 
 #pragma mark - async
 
-+ (void)asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish;
 
-+ (void)asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
-+ (void)asyncMappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)asyncMappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
 
 @end

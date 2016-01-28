@@ -22,6 +22,7 @@
 #error this file is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
 #endif
 
+//#define NO_ASSERT
 
 #ifdef NO_ASSERT
 

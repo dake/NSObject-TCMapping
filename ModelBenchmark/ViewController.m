@@ -148,14 +148,14 @@
         begin = CACurrentMediaTime();
         @autoreleasepool {
             for (int i = 0; i < count; i++) {
-                TCGHUser *user = [TCGHUser mappingWithDictionary:json];
+                TCGHUser *user = [TCGHUser tc_mappingWithDictionary:json];
                 user = nil;
             }
         }
         end = CACurrentMediaTime();
         printf("TCGHUser:        %8.2f   \n", (end - begin) * 1000);
         
-        TCGHUser *user = [TCGHUser mappingWithDictionary:json];
+        TCGHUser *user = [TCGHUser tc_mappingWithDictionary:json];
         if (user.userID == 0) NSLog(@"error!");
         if (!user.login) NSLog(@"error!");
         if (!user.htmlURL) NSLog(@"error");
@@ -445,7 +445,7 @@
         begin = CACurrentMediaTime();
         @autoreleasepool {
             for (int i = 0; i < count; i++) {
-                TCWeiboStatus *feed = [TCWeiboStatus mappingWithDictionary:json];
+                TCWeiboStatus *feed = [TCWeiboStatus tc_mappingWithDictionary:json];
                 feed = nil;
             }
         }
@@ -692,7 +692,7 @@
         YYGHUser *yyUser = [YYGHUser yy_modelWithJSON:json];
         logError(@"YYModel:        ", yyUser);
         
-        TCGHUser *tcUser = [TCGHUser mappingWithDictionary:json];
+        TCGHUser *tcUser = [TCGHUser tc_mappingWithDictionary:json];
         logError(@"TCGHUser:       ", tcUser);
         
         // FastEasyMapping
@@ -741,7 +741,7 @@
         YYGHUser *yyUser = [YYGHUser yy_modelWithJSON:json];
         logError(@"YYModel:        ", yyUser);
         
-        TCGHUser *tcUser = [TCGHUser mappingWithDictionary:json];
+        TCGHUser *tcUser = [TCGHUser tc_mappingWithDictionary:json];
         logError(@"TCGHUser:       ", tcUser);
         
         // FastEasyMapping
@@ -802,7 +802,7 @@
         YYGHUser *yyUser = [YYGHUser yy_modelWithJSON:json];
         logError(@"YYModel:        ", yyUser);
         
-        TCGHUser *tcUser = [TCGHUser mappingWithDictionary:json];
+        TCGHUser *tcUser = [TCGHUser tc_mappingWithDictionary:json];
         logError(@"TCGHUser:       ", tcUser);
         NSDate *date = tcUser.testDate;
         if (date == nil || date == (id)[NSNull null]) {
@@ -861,7 +861,7 @@
         YYGHUser *yyUser = [YYGHUser yy_modelWithJSON:json];
         logError(@"YYModel:        ", yyUser);
         
-        TCGHUser *tcUser = [TCGHUser mappingWithDictionary:json];
+        TCGHUser *tcUser = [TCGHUser tc_mappingWithDictionary:json];
         logError(@"TCGHUser:       ", tcUser);
         
         // FastEasyMapping

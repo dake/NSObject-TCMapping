@@ -9,13 +9,13 @@
 #import "TCWeiboModel.h"
 
 @implementation TCWeiboPictureMetadata
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     return @{@"cutType" : @"cut_type"};
 }
 @end
 
 @implementation TCWeiboPicture
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     return @{@"picID" : @"pic_id",
              @"keepSize" : @"keep_size",
              @"photoTag" : @"photo_tag",
@@ -25,7 +25,7 @@
 @end
 
 @implementation TCWeiboURL
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     return @{@"oriURL" : @"ori_url",
              @"urlTitle" : @"url_title",
              @"urlTypePic" : @"url_type_pic",
@@ -38,7 +38,7 @@
 @end
 
 @implementation TCWeiboUser
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     return @{@"userID" : @"id",
              @"idString" : @"idstr",
              @"genderString" : @"gender",
@@ -85,7 +85,7 @@
 @end
 
 @implementation TCWeiboStatus
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     return @{@"statusID" : @"id",
              @"createdAt" : @"created_at",
              @"attitudesStatus" : @"attitudes_status",
@@ -107,7 +107,7 @@
              @"picInfos" : @"pic_infos",
              @"inReplyToUserId" : @"in_reply_to_user_id"};
 }
-+ (NSDictionary *)propertyTypeFormat {
++ (NSDictionary *)tc_propertyTypeFormat {
     return @{@"picIds" : [NSString class],
              @"picInfos" : [TCWeiboPicture class],
              @"urlStruct" : [TCWeiboURL class]};

@@ -118,7 +118,7 @@ SET_NUM(_following, @"following");
 
 @implementation TestBaseModel
 
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     static NSDictionary *dic = nil;
     
     static dispatch_once_t onceToken;
@@ -145,12 +145,12 @@ SET_NUM(_following, @"following");
 
 
 @implementation TCGHUser
-+ (NSDictionary *)propertyNameMapping {
++ (NSDictionary *)tc_propertyNameMapping {
     static NSDictionary *dic = nil;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:super.propertyNameMapping];
+        NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:super.tc_propertyNameMapping];
         [tmp addEntriesFromDictionary:@{
                                         //                @"userID" : @"id",
                                         @"avatarURL" : @"avatar_url",
@@ -176,7 +176,7 @@ SET_NUM(_following, @"following");
     return dic;
 }
 
-+ (NSDictionary *)propertyTypeFormat
++ (NSDictionary *)tc_propertyTypeFormat
 {
     return @{@"updatedAt": @"yyyy-MM-dd'T'HH:mm:ssZ"};
 }

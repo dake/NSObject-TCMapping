@@ -7,96 +7,8 @@
 //
 
 #import "NSObject+TCNSCoding.h"
-#import <objc/runtime.h>
+#import "TCMappingMeta.h"
 
-
-static NSArray<NSString *> *codingPropertyListUntilNSObjectFrom(Class klass)
-{
-    if (Nil == klass || klass == NSObject.class) {
-        return nil;
-    }
-    
-    static NSRecursiveLock *s_recursiveLock;
-    static NSMutableDictionary<NSString *, NSMutableArray *> *s_writablePropertyByClass;
-    
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        s_writablePropertyByClass = [NSMutableDictionary dictionary];
-        s_recursiveLock = [[NSRecursiveLock alloc] init];
-    });
-    
-    NSString *key = NSStringFromClass(klass);
-    
-    [s_recursiveLock lock];
-    NSArray *propertyNames = s_writablePropertyByClass[key];
-    if (nil != propertyNames) {
-        [s_recursiveLock unlock];
-        return propertyNames;
-    }
-
-    
-    NSMutableArray *arry = [NSMutableArray array];
-    NSDictionary *nameMapping = [klass tc_propertyNSCodingMapping];
-    unsigned int num = 0;
-    objc_property_t *properties = class_copyPropertyList(klass, &num);
-    for (unsigned int i = 0; i < num; ++i) {
-        
-        const char *attributes = property_getAttributes(properties[i]);
-        char buffer[1 + strlen(attributes)];
-        strcpy(buffer, attributes);
-        char *state = buffer;
-        char *attribute = NULL;
-        
-        BOOL ignore = NULL == attributes;
-        NSInteger j = 0;
-        while (!ignore && j++ < 2 && (attribute = strsep(&state, ",")) != NULL) {
-            switch (attribute[0]) {
-                case 'T': { // type encoding
-                    size_t len = strlen(attribute);
-                    if (len > 2 && attribute[0] == 'T' && attribute[1] == '@') { // [@(attribute) hasPrefix:@"T@"]
-                        attribute[len - 1] = '\0';
-                        NSString *typeName = @((attribute + 3));
-                        // "T@\"TestModel2<TCMappingIgnore><TCNSCodingIgnore>"
-                        if (attribute[len - 2] == '>') {
-                            NSRange range = [typeName rangeOfString:@"<"];
-                            if (range.location != NSNotFound) {
-                                typeName = [typeName substringFromIndex:range.location];
-                                if ([typeName rangeOfString:NSStringFromProtocol(@protocol(NSCodingIgnore))].location != NSNotFound) {
-                                    ignore = YES;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                }
-                    
-                case 'R': { // readonly
-                    ignore = YES;
-                    break;
-                }
-                    
-                default:
-                    break;
-            }
-        }
-        
-        if (ignore) {
-            continue;
-        }
-        
-        NSString *propertyName = [NSString stringWithUTF8String:property_getName(properties[i])];
-        if (nil != propertyName && nameMapping[propertyName] != (id)kCFNull) {
-            [arry addObject:propertyName];
-        }
-    }
-    free(properties);
-    
-    [arry addObjectsFromArray:codingPropertyListUntilNSObjectFrom(class_getSuperclass(klass))];
-    s_writablePropertyByClass[key] = arry;
-    
-    [s_recursiveLock unlock];
-    return arry;
-}
 
 @implementation NSObject (TCNSCoding)
 
@@ -113,7 +25,11 @@ static NSArray<NSString *> *codingPropertyListUntilNSObjectFrom(Class klass)
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    for (NSString *key in codingPropertyListUntilNSObjectFrom(self.class)) {
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    for (NSString *key in metaDic.allKeys) {
+        if (metaDic[key]->_ignoreNSCoding) {
+            continue;
+        }
         NSString *mapKey = nameMapping[key];
         if (nil == mapKey) {
             mapKey = key;
@@ -137,7 +53,11 @@ static NSArray<NSString *> *codingPropertyListUntilNSObjectFrom(Class klass)
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    for (NSString *key in codingPropertyListUntilNSObjectFrom(self.class)) {
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    for (NSString *key in metaDic.allKeys) {
+        if (metaDic[key]->_ignoreNSCoding) {
+            continue;
+        }
         NSString *mapKey = nameMapping[key];
         if (nil == mapKey) {
             mapKey = key;
@@ -148,6 +68,33 @@ static NSArray<NSString *> *codingPropertyListUntilNSObjectFrom(Class klass)
     }
     
     return obj;
+}
+
+@end
+
+
+@implementation NSObject (TCNSCopying)
+
++ (NSArray<NSString *> *)tc_propertyCopyIgnore
+{
+    return nil;
+}
+
+- (instancetype)tc_copy
+{
+    typeof(self) copy = [[self.class alloc] init];
+    
+    NSArray<NSString *> *ignoreList = self.class.tc_propertyCopyIgnore;
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    for (NSString *key in metaDic.allKeys) {
+        if (metaDic[key]->_ignoreCopying || [ignoreList containsObject:key]) {
+            continue;
+        }
+
+        [copy setValue:[self valueForKey:key] forKey:key];
+    }
+    
+    return copy;
 }
 
 @end

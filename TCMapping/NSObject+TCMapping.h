@@ -8,8 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-// TODO: TCMappingIgnore
-@protocol TCMappingIgnore <NSObject>
+@protocol TCMappingIgnore
 @end
 
 @class NSManagedObjectContext;

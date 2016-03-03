@@ -9,9 +9,8 @@
 #import <Foundation/Foundation.h>
 
 
-@protocol NSCodingIgnore <NSObject>
+@protocol NSCodingIgnore
 @end
-
 
 @interface NSObject (TCNSCoding)
 
@@ -23,5 +22,17 @@
 - (void)tc_encodeWithCoder:(NSCoder *)coder;
 - (instancetype)tc_initWithCoder:(NSCoder *)coder;
 
+
+@end
+
+
+@protocol NSCopyingIgnore
+@end
+
+@interface NSObject (TCNSCopying)
+
++ (NSArray<NSString *> *)tc_propertyCopyIgnore;
+
+- (instancetype)tc_copy;
 
 @end

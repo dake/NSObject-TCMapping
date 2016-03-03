@@ -16,6 +16,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (id)copyWithZone:(NSZone *)zone { return [self tc_copy]; }
 
 @end
 
@@ -30,6 +31,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (id)copyWithZone:(NSZone *)zone { return [self tc_copy]; }
 
 @end
 
@@ -47,6 +49,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (id)copyWithZone:(NSZone *)zone { return [self tc_copy]; }
 
 @end
 
@@ -98,6 +101,7 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (id)copyWithZone:(NSZone *)zone { return [self tc_copy]; }
 
 @end
 
@@ -134,5 +138,6 @@
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (id)copyWithZone:(NSZone *)zone { return [self tc_copy]; }
 
 @end

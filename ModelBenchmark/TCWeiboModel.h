@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@interface TCWeiboPictureMetadata : NSObject
+@interface TCWeiboPictureMetadata : NSObject <NSCoding, NSCopying>
 @property (nonatomic, strong) NSString *url;
 @property (nonatomic, assign) int width;
 @property (nonatomic, assign) int height;
@@ -16,7 +16,7 @@
 @property (nonatomic, assign) int cutType;
 @end
 
-@interface TCWeiboPicture : NSObject
+@interface TCWeiboPicture : NSObject <NSCoding, NSCopying>
 @property (nonatomic, strong) NSString *picID;
 @property (nonatomic, strong) NSString *objectID;
 @property (nonatomic, assign) int photoTag;
@@ -29,7 +29,7 @@
 @property (nonatomic, strong) TCWeiboPictureMetadata *original;
 @end
 
-@interface TCWeiboURL : NSObject
+@interface TCWeiboURL : NSObject <NSCoding, NSCopying>
 @property (nonatomic, assign) BOOL result;
 @property (nonatomic, strong) NSString *shortURL;
 @property (nonatomic, strong) NSString *oriURL;
@@ -42,7 +42,7 @@
 @property (nonatomic, strong) NSString *storageType;
 @end
 
-@interface TCWeiboUser : NSObject
+@interface TCWeiboUser : NSObject <NSCoding, NSCopying>
 @property (nonatomic, assign) uint64_t userID;
 @property (nonatomic, strong) NSString *idString;
 @property (nonatomic, strong) NSString *genderString;
@@ -109,7 +109,7 @@
 @property (nonatomic, strong) NSString *verifiedReasonModified;
 @end
 
-@interface TCWeiboStatus : NSObject
+@interface TCWeiboStatus : NSObject <NSCoding, NSCopying>
 @property (nonatomic, assign) uint64_t statusID;
 @property (nonatomic, strong) NSString *idstr;
 @property (nonatomic, strong) NSString *mid;

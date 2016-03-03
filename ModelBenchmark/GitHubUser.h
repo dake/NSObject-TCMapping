@@ -60,7 +60,7 @@
 
 @end
 
-@interface TCGHUser : TestBaseModel
+@interface TCGHUser : TestBaseModel <NSCoding>
 
 
 @property (nonatomic, strong) NSString *avatarURL;

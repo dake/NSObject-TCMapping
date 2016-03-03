@@ -153,12 +153,24 @@
             }
         }
         end = CACurrentMediaTime();
-        printf("TCGHUser:        %8.2f   \n", (end - begin) * 1000);
+        printf("TCGHUser:        %8.2f   ", (end - begin) * 1000);
         
         TCGHUser *user = [TCGHUser tc_mappingWithDictionary:json];
         if (user.userID == 0) NSLog(@"error!");
         if (!user.login) NSLog(@"error!");
         if (!user.htmlURL) NSLog(@"error");
+        
+        
+        printf("     N/A   ");
+        begin = CACurrentMediaTime();
+        @autoreleasepool {
+            for (int i = 0; i < count; i++) {
+                NSData *data = [NSKeyedArchiver archivedDataWithRootObject:user];
+                [holder addObject:data];
+            }
+        }
+        end = CACurrentMediaTime();
+        printf("%8.2f\n", (end - begin) * 1000);
     }
     
     /*------------------- YYModel -------------------*/
@@ -450,7 +462,20 @@
             }
         }
         end = CACurrentMediaTime();
-        printf("TCModel:         %8.2f   \n", (end - begin) * 1000);
+        printf("TCModel:         %8.2f   ", (end - begin) * 1000);
+        
+        printf("     N/A   ");
+        
+        TCWeiboStatus *feed = [TCWeiboStatus tc_mappingWithDictionary:json];
+        begin = CACurrentMediaTime();
+        @autoreleasepool {
+            for (int i = 0; i < count; i++) {
+                NSData *data = [NSKeyedArchiver archivedDataWithRootObject:feed];
+                [holder addObject:data];
+            }
+        }
+        end = CACurrentMediaTime();
+        printf("%8.2f\n", (end - begin) * 1000);
     }
     
     

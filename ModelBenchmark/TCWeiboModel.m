@@ -7,11 +7,16 @@
 //
 
 #import "TCWeiboModel.h"
+#import "NSObject+TCNSCoding.h"
 
 @implementation TCWeiboPictureMetadata
 + (NSDictionary *)tc_propertyNameMapping {
     return @{@"cutType" : @"cut_type"};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 @end
 
 @implementation TCWeiboPicture
@@ -22,6 +27,10 @@
              @"objectID" : @"object_id",
              @"middlePlus" : @"middleplus"};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 @end
 
 @implementation TCWeiboURL
@@ -35,6 +44,10 @@
              @"pageID" : @"page_id",
              @"storageType" : @"storage_type"};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 @end
 
 @implementation TCWeiboUser
@@ -82,9 +95,14 @@
              @"verifiedSource" : @"verified_source",
              @"userAbility" : @"user_ability"};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 @end
 
 @implementation TCWeiboStatus
+
 + (NSDictionary *)tc_propertyNameMapping {
     return @{@"statusID" : @"id",
              @"createdAt" : @"created_at",
@@ -107,9 +125,14 @@
              @"picInfos" : @"pic_infos",
              @"inReplyToUserId" : @"in_reply_to_user_id"};
 }
+
 + (NSDictionary *)tc_propertyTypeFormat {
     return @{@"picIds" : [NSString class],
              @"picInfos" : [TCWeiboPicture class],
              @"urlStruct" : [TCWeiboURL class]};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 @end

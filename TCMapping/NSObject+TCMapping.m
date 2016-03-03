@@ -108,14 +108,14 @@ NS_INLINE TCMappingClassType classTypeForStructType(const char *typeNameString)
     }
 }
 
-static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
+static NSDictionary<NSString *, TCMappingMeta *> *readwritePropertyListUntilNSObjectFrom(Class klass)
 {
     if (Nil == klass || klass == NSObject.class) {
         return nil;
     }
     
     static NSRecursiveLock *s_recursiveLock;
-    static NSMutableDictionary *s_writablePropertyByClass;
+    static NSMutableDictionary<NSString *, NSMutableDictionary *> *s_writablePropertyByClass;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -126,15 +126,18 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
     NSString *key = NSStringFromClass(klass);
     
     [s_recursiveLock lock];
-    NSMutableDictionary *propertyNames = s_writablePropertyByClass[key];
+    NSMutableDictionary<NSString *, TCMappingMeta *> *propertyNames = s_writablePropertyByClass[key];
     if (nil != propertyNames) {
         [s_recursiveLock unlock];
         return propertyNames;
     }
     
+    
+    NSDictionary *nameMapping = [klass tc_propertyNameMapping];
     propertyNames = [NSMutableDictionary dictionary];
     unsigned int num = 0;
     objc_property_t *properties = class_copyPropertyList(klass, &num);
+    
     for (unsigned int i = 0; i < num; ++i) {
         
         const char *attributes = property_getAttributes(properties[i]);
@@ -144,25 +147,46 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
         char *attribute = NULL;
         
         BOOL isObj = NO;
-        BOOL isWritable = NULL != attributes;
+        BOOL ignore = NULL == attributes;
         NSString *typeName = nil;
         TCMappingClassType classType = kTCMappingClassTypeUnknown;
         __unsafe_unretained Class typeClass = Nil;
         
         NSInteger j = 0;
-        while (j++ < 2 && (attribute = strsep(&state, ",")) != NULL) {
+        while (!ignore && j++ < 2 && (attribute = strsep(&state, ",")) != NULL) {
             switch (attribute[0]) {
                 case 'T': { // type encoding
                     size_t len = strlen(attribute);
                     if (len >= 2 && attribute[0] == 'T' && attribute[1] == '@') { // [@(attribute) hasPrefix:@"T@"]
                         isObj = YES;
                         if (len == 2) {
-                            typeName = @((attribute + 1));
+                            typeName = @"@";
                             classType = kTCMappingClassTypeId;
                         } else {
                             attribute[len - 1] = '\0';
                             typeName = @((attribute + 3));
-                            typeClass = NSClassFromString(typeName);
+                            // "T@\"TestModel2<TCMappingIgnore><TCNSCodingIgnore>"
+                            if (attribute[len - 2] == '>') {
+                                NSRange range = [typeName rangeOfString:@"<"];
+                                if (range.location != NSNotFound) {
+                                    NSString *ignoreProtocol = [typeName substringFromIndex:range.location];
+                                    if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCMappingIgnore))].location != NSNotFound) {
+                                        ignore = YES;
+                                        break;
+                                    }
+                                    
+                                    if (range.location != 0) {
+                                        typeName = [typeName substringToIndex:range.location];
+                                    } else {
+                                        typeName = @"@";
+                                        classType = kTCMappingClassTypeId;
+                                    }
+                                }
+                            }
+                            
+                            if (kTCMappingClassTypeId != classType) {
+                                typeClass = NSClassFromString(typeName);
+                            }
                         }
                     } else {
                         isObj = NO;
@@ -179,7 +203,7 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
                 }
                     
                 case 'R': { // readonly
-                    isWritable = NO;
+                    ignore = YES;
                     break;
                 }
                     
@@ -188,13 +212,13 @@ static NSDictionary *readwritePropertyListUntilNSObjectFrom(Class klass)
             }
         }
         
-        if (!isWritable || (isObj && classType != kTCMappingClassTypeId && Nil == typeClass)) {
+        if (ignore || (isObj && classType != kTCMappingClassTypeId && Nil == typeClass)) {
             continue;
         }
         
         NSString *propertyName = [NSString stringWithUTF8String:property_getName(properties[i])];
         // TODO: custom set method
-        if (nil != propertyName) {
+        if (nil != propertyName && nameMapping[propertyName] != (id)kCFNull) {
             
             TCMappingMeta *meta = [[TCMappingMeta alloc] init];
             meta->_typeName = typeName;
@@ -456,7 +480,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     return nil;
 }
 
-+ (NSDictionary<__kindof NSString *, __kindof NSString *> *)tc_propertyTypeFormat
++ (NSDictionary<__kindof NSString *, id> *)tc_propertyTypeFormat
 {
     return nil;
 }
@@ -531,7 +555,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     
     NSDictionary *typeMappingDic = currentClass.tc_propertyTypeFormat;
     NSDictionary *nameMappingDic = inputPropertyDic;
-    __unsafe_unretained NSDictionary *sysWritablePropertiesMeta = readwritePropertyListUntilNSObjectFrom(currentClass);
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *sysWritablePropertiesMeta = readwritePropertyListUntilNSObjectFrom(currentClass);
     
     if (!useInputPropertyDicOnly || inputPropertyDic.count < 1) {
         NSDictionary *inputMappingDic = inputPropertyDic;
@@ -543,7 +567,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     
     BOOL ignoreNSNull = currentClass.tc_mappingIgnoreNSNull;
     for (__unsafe_unretained NSString *propertyName in nameMappingDic) {
-        if (nil == propertyName || (id)kCFNull == propertyName) {
+        if (nil == propertyName || (id)kCFNull == propertyName || (id)kCFNull == nameMappingDic[propertyName]) {
             continue;
         }
         

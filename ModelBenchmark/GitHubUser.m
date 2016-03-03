@@ -8,6 +8,7 @@
 
 #import "GitHubUser.h"
 #import "DateFormatter.h"
+#import "NSObject+TCNSCoding.h"
 
 
 @implementation GHUser
@@ -138,8 +139,9 @@ SET_NUM(_following, @"following");
              };
 }
 
-- (void)encodeWithCoder:(NSCoder *)aCoder { [self yy_modelEncodeWithCoder:aCoder]; }
-- (id)initWithCoder:(NSCoder *)aDecoder { return [self yy_modelInitWithCoder:aDecoder]; }
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+
 
 @end
 
@@ -180,6 +182,9 @@ SET_NUM(_following, @"following");
 {
     return @{@"updatedAt": @"yyyy-MM-dd'T'HH:mm:ssZ"};
 }
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
 
 @end
 

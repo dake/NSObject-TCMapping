@@ -8,6 +8,10 @@
 
 #import <Foundation/Foundation.h>
 
+// TODO: TCMappingIgnore
+@protocol TCMappingIgnore <NSObject>
+@end
+
 @class NSManagedObjectContext;
 @interface NSObject (TCMapping)
 
@@ -28,7 +32,7 @@
 
 
 /**
- @brief	format: @{@"propertyName": @"json'propertyName"}
+ @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
  
  @return the mapping dictionary
  */
@@ -39,7 +43,7 @@
  
  @return the mapping dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSString *> *)tc_propertyTypeFormat;
++ (NSDictionary<__kindof NSString *, id> *)tc_propertyTypeFormat;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
@@ -49,16 +53,16 @@
  */
 + (NSDictionary<__kindof NSString *, __kindof NSObject *> *)tc_propertyForPrimaryKey;
 
++ (NSTimeZone *)tc_dateTimeZone;
++ (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
++ (BOOL)tc_mappingIgnoreNSNull;
+
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context;
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic;
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
-
-+ (NSTimeZone *)tc_dateTimeZone;
-+ (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
-+ (BOOL)tc_mappingIgnoreNSNull;
 
 - (void)tc_mappingWithDictionary:(NSDictionary *)dic;
 - (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
@@ -79,6 +83,7 @@
 
 
 @end
+
 
 
 @interface NSDictionary (TCMapping)

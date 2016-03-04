@@ -26,6 +26,8 @@
 @end
 
 
+#pragma mark -
+
 @protocol NSCopyingIgnore
 @end
 
@@ -34,5 +36,15 @@
 + (NSArray<NSString *> *)tc_propertyCopyIgnore;
 
 - (instancetype)tc_copy;
+
+@end
+
+
+#pragma mark -
+
+@interface NSObject (TCEqual)
+
+- (NSUInteger)tc_hash;
+- (BOOL)tc_isEqual:(id)object;
 
 @end

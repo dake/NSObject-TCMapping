@@ -319,19 +319,19 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic
 {
-    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:nil targetBlock:nil useInputPropertyDicOnly:NO];
+    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:nil targetBlock:nil useInputPropertyMappingOnly:NO];
 }
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
 {
-    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:context targetBlock:nil useInputPropertyDicOnly:NO];
+    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:context targetBlock:nil useInputPropertyMappingOnly:NO];
 }
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dataDic
-                         propertyMapping:(NSDictionary<NSString *, NSString *> *)inputPropertyDic
+                         propertyMapping:(NSDictionary<NSString *, NSString *> *)inputNameDic
                                  context:(NSManagedObjectContext *)context
                              targetBlock:(id(^)(void))targetBlock
-                 useInputPropertyDicOnly:(BOOL)useInputPropertyDicOnly
+             useInputPropertyMappingOnly:(BOOL)useInputNameDicOnly
 {
     if (nil == dataDic || ![dataDic isKindOfClass:NSDictionary.class] || dataDic.count < 1) {
         return nil;
@@ -343,26 +343,30 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     }
     Class currentClass = obj.class ?: self;
     
-    NSDictionary *typeMappingDic = currentClass.tc_propertyTypeFormat;
-    NSDictionary *nameMappingDic = inputPropertyDic;
-    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(currentClass);
+    NSDictionary *typeDic = currentClass.tc_propertyTypeFormat;
+    NSDictionary *nameDic = inputNameDic;
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(currentClass);
     
-    if (!useInputPropertyDicOnly || inputPropertyDic.count < 1) {
-        NSDictionary *inputMappingDic = inputPropertyDic;
+    if (!useInputNameDicOnly || inputNameDic.count < 1) {
+        NSDictionary *inputMappingDic = inputNameDic;
         if (inputMappingDic.count < 1) {
             inputMappingDic = currentClass.tc_propertyNameMapping;
         }
-        nameMappingDic = nameMappingDicFor(inputMappingDic, metaDic.allKeys);
+        nameDic = nameMappingDicFor(inputMappingDic, metaDic.allKeys);
     }
     
     BOOL ignoreNSNull = currentClass.tc_mappingIgnoreNSNull;
-    for (__unsafe_unretained NSString *propertyName in nameMappingDic) {
-        if (nil == propertyName || (id)kCFNull == propertyName ||
-            (id)kCFNull == nameMappingDic[propertyName] || metaDic[propertyName]->_ignoreMapping) {
+    for (__unsafe_unretained NSString *propertyName in nameDic) {
+        if (nil == propertyName || (id)kCFNull == propertyName || (id)kCFNull == nameDic[propertyName]) {
             continue;
         }
         
-        NSObject *value = dataDic[nameMappingDic[propertyName]];
+        TCMappingMeta *meta = metaDic[propertyName];
+        if (meta->_ignoreMapping || NULL == meta->_setter) {
+            continue;
+        }
+        
+        NSObject *value = dataDic[nameDic[propertyName]];
         if (nil == value) {
             value = dataDic[propertyName];
         }
@@ -380,12 +384,12 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     value = nil;
                 } else if (meta->_classType == kTCMappingClassTypeNSDictionary) {
                     
-                    __unsafe_unretained Class dicValueClass = classForType(typeMappingDic[propertyName]);
+                    __unsafe_unretained Class dicValueClass = classForType(typeDic[propertyName]);
                     if (Nil != dicValueClass) {
                         NSMutableDictionary *tmpDic = [NSMutableDictionary dictionary];
-                        NSDictionary *dicValueMappingDic = nameMappingDicFor(dicValueClass.tc_propertyNameMapping, tc_readwritePropertiesUntilNSObjectFrom(dicValueClass).allKeys);
+                        NSDictionary *dicValueNameDic = nameMappingDicFor(dicValueClass.tc_propertyNameMapping, tc_propertiesUntilRootClass(dicValueClass).allKeys);
                         for (id dicKey in valueDataDic) {
-                            id tmpValue = [dicValueClass tc_mappingWithDictionary:valueDataDic[dicKey] propertyMapping:dicValueMappingDic context:context targetBlock:nil useInputPropertyDicOnly:YES];
+                            id tmpValue = [dicValueClass tc_mappingWithDictionary:valueDataDic[dicKey] propertyMapping:dicValueNameDic context:context targetBlock:nil useInputPropertyMappingOnly:YES];
                             if (nil != tmpValue) {
                                 tmpDic[dicKey] = tmpValue;
                             }
@@ -398,7 +402,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 } else {
                     value = [klass tc_mappingWithDictionary:valueDataDic propertyMapping:nil context:context targetBlock:nil == obj ? nil : ^{
                         return [obj valueForKey:propertyName];
-                    } useInputPropertyDicOnly:NO];
+                    } useInputPropertyMappingOnly:NO];
                 }
             } else {
                 value = nil;
@@ -412,7 +416,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 if (Nil == meta->_typeClass || meta->_classType != kTCMappingClassTypeNSArray) {
                     value = nil;
                 } else {
-                    __unsafe_unretained Class arrayItemType = classForType(typeMappingDic[propertyName]);
+                    __unsafe_unretained Class arrayItemType = classForType(typeDic[propertyName]);
                     if (Nil != arrayItemType) {
                         value = [arrayItemType mappingArray:valueDataArry withContext:context];
                     }
@@ -423,7 +427,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 }
             }
         } else if (value != (id)kCFNull) {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, metaDic[propertyName], typeMappingDic, currentClass);
+            value = valueForBaseTypeOfPropertyName(propertyName, value, metaDic[propertyName], typeDic, currentClass);
         }
         
         if (nil == value) {
@@ -436,7 +440,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
             if (nil == context) {
                 obj = [[currentClass alloc] init];
             } else {
-                obj = [currentClass coreDataInstanceWithValue:dataDic withNameMappingDic:nameMappingDic withContext:context];
+                obj = [currentClass coreDataInstanceWithValue:dataDic nameMappingDic:nameDic context:context];
             }
         }
         
@@ -446,12 +450,12 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     return obj.tc_mappingValidate ? obj : nil;
 }
 
-+ (instancetype)coreDataInstanceWithValue:(NSDictionary *)value withNameMappingDic:(NSDictionary *)nameMappingDic withContext:(NSManagedObjectContext *)context
++ (instancetype)coreDataInstanceWithValue:(NSDictionary *)value nameMappingDic:(NSDictionary *)nameDic context:(NSManagedObjectContext *)context
 {
     // fill up primary keys
     NSMutableDictionary *primaryKey = self.tc_propertyForPrimaryKey.mutableCopy;
     for (NSString *pKey in primaryKey) {
-        id tmpValue = value[nameMappingDic[pKey]];
+        id tmpValue = value[nameDic[pKey]];
         if (nil != tmpValue && tmpValue != (id)kCFNull) {
             primaryKey[pKey] = tmpValue;
         }
@@ -529,7 +533,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 {
     [self.class tc_mappingWithDictionary:dic propertyMapping:extraNameMappingDic context:nil targetBlock:^{
         return self;
-    } useInputPropertyDicOnly:NO];
+    } useInputPropertyMappingOnly:NO];
 }
 
 

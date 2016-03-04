@@ -11,6 +11,8 @@
 
 typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     kTCMappingClassTypeUnknown = 0,
+    
+    // sys type
     kTCMappingClassTypeNSString,
     kTCMappingClassTypeNSValue,
     kTCMappingClassTypeNSNumber,
@@ -18,10 +20,45 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     kTCMappingClassTypeNSURL,
     kTCMappingClassTypeNSArray,
     kTCMappingClassTypeNSDictionary,
+    kTCMappingClassTypeNSSet,
+    kTCMappingClassTypeNSHashTable,
+    kTCMappingClassTypeNSData,
+    kTCMappingClassTypeNSNull,
     
-    kTCMappingClassTypeId, // id type
-    kTCMappingClassTypeBaseScalar, // int, double, etc...
+    // id type
+    kTCMappingClassTypeId,
+    kTCMappingClassTypeBlock,
+        kTCMappingClassTypeClass,
     
+    // int, double, etc...
+    kTCMappingClassTypeVoid,
+
+    
+    kTCMappingClassTypeCPointer,
+    kTCMappingClassTypeCString,
+    kTCMappingClassTypeCArray,
+    kTCMappingClassTypeUnion,
+    kTCMappingClassTypeSEL,
+    
+    kTCMappingClassTypeBool,
+    kTCMappingClassTypeInt64,
+    kTCMappingClassTypeUInt64,
+    kTCMappingClassTypeInt32,
+    kTCMappingClassTypeUInt32,
+    kTCMappingClassTypeInt16,
+    kTCMappingClassTypeUInt16,
+    kTCMappingClassTypeInt8,
+    kTCMappingClassTypeUInt8,
+    
+    
+    kTCMappingClassTypeFloat,
+    kTCMappingClassTypeDouble,
+    kTCMappingClassTypeLongDouble,
+    
+    
+    kTCMappingClassTypeBaseScalarUnkown,
+    
+    // struct
     kTCMappingClassTypeCGPoint,
     kTCMappingClassTypeCGVector,
     kTCMappingClassTypeCGSize,
@@ -29,6 +66,10 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     kTCMappingClassTypeCGAffineTransform,
     kTCMappingClassTypeUIEdgeInsets,
     kTCMappingClassTypeUIOffset,
+    kTCMappingClassTypeNSRange,
+    kTCMappingClassTypeUIRectEdge,
+    
+    kTCMappingClassTypeStructUnkown,
 };
 
 
@@ -37,15 +78,19 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
 @public
     BOOL _isObj;
     NSString *_typeName;
+    NSString *_propertyName;
     Class _typeClass;
     TCMappingClassType _classType;
     
+    SEL _getter;
+    SEL _setter;
     BOOL _ignoreMapping;
     BOOL _ignoreNSCoding;
     BOOL _ignoreCopying;
 }
 
++ (BOOL)isNSTypeForClass:(Class)klass;
+
 @end
 
-
-extern NSDictionary<NSString *, TCMappingMeta *> *tc_readwritePropertiesUntilNSObjectFrom(Class klass);
+extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class klass);

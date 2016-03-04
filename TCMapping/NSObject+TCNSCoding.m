@@ -20,30 +20,38 @@
 - (void)tc_encodeWithCoder:(NSCoder *)coder
 {
     NSParameterAssert(coder);
-    if (nil == coder) {
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use encodeWithCoder instead!");
+    if (nil == coder || [TCMappingMeta isNSTypeForClass:self.class]) {
         return;
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        if (metaDic[key]->_ignoreNSCoding) {
+        TCMappingMeta *meta = metaDic[key];
+        if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter) {
             continue;
         }
+        
         NSString *mapKey = nameMapping[key];
         if (nil == mapKey) {
             mapKey = key;
         } else if ((id)kCFNull == mapKey) {
             continue;
         }
-        [coder encodeObject:[self valueForKey:key] forKey:mapKey];
+        NSObject *value = [self valueForKey:key];
+        NSAssert(nil == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
+        if (nil == value || [value respondsToSelector:@selector(encodeWithCoder:)]) {
+            [coder encodeObject:value forKey:mapKey];
+        }
     }
 }
 
 - (instancetype)tc_initWithCoder:(NSCoder *)coder
 {
     NSParameterAssert(coder);
-    if (nil == coder) {
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use encodeWithCoder instead!");
+    if (nil == coder || [TCMappingMeta isNSTypeForClass:self.class]) {
         return nil;
     }
     
@@ -53,9 +61,10 @@
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        if (metaDic[key]->_ignoreNSCoding) {
+        TCMappingMeta *meta = metaDic[key];
+        if (meta->_ignoreNSCoding || NULL == meta->_setter) {
             continue;
         }
         NSString *mapKey = nameMapping[key];
@@ -82,12 +91,14 @@
 
 - (instancetype)tc_copy
 {
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use copy instead of tc_copy!");
     typeof(self) copy = [[self.class alloc] init];
     
     NSArray<NSString *> *ignoreList = self.class.tc_propertyCopyIgnore;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_readwritePropertiesUntilNSObjectFrom(self.class);
+    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        if (metaDic[key]->_ignoreCopying || [ignoreList containsObject:key]) {
+        TCMappingMeta *meta = metaDic[key];
+        if (NULL == meta->_getter || NULL == meta->_setter || [ignoreList containsObject:key]) {
             continue;
         }
 
@@ -95,6 +106,23 @@
     }
     
     return copy;
+}
+
+@end
+
+
+@implementation NSObject (TCEqual)
+
+// TODO:
+- (NSUInteger)tc_hash
+{
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use hash instead of tc_hash!");
+    return 0;
+}
+
+- (BOOL)tc_isEqual:(id)object
+{
+    return NO;
 }
 
 @end

@@ -12,9 +12,15 @@
 #import <UIKit/UIGeometry.h>
 
 
-@protocol TCMappingIgnore;
-@protocol NSCodingIgnore;
-@protocol NSCopyingIgnore;
+@protocol TCMappingIgnore
+@end
+
+@protocol NSCodingIgnore
+@end
+
+@protocol NSCopyingIgnore
+@end
+
 
 
 NS_INLINE TCMappingClassType classTypeForStructType(const char *type)

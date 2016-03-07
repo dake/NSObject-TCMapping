@@ -9,8 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@protocol NSCodingIgnore
-@end
+@protocol NSCodingIgnore;
 
 @interface NSObject (TCNSCoding)
 
@@ -26,10 +25,9 @@
 @end
 
 
-#pragma mark -
+#pragma mark - TCNSCopying
 
-@protocol NSCopyingIgnore
-@end
+@protocol NSCopyingIgnore;
 
 @interface NSObject (TCNSCopying)
 
@@ -40,7 +38,7 @@
 @end
 
 
-#pragma mark -
+#pragma mark - TCEqual
 
 @interface NSObject (TCEqual)
 

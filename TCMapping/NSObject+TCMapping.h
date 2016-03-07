@@ -8,10 +8,17 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol TCMappingIgnore
+
+@protocol TCMappingPersistentContext <NSObject>
+
+@required
+- (id)instanceForPrimaryKey:(NSDictionary<NSString *, id> *)primaryKey class:(Class)klass;
+
 @end
 
-@class NSManagedObjectContext;
+
+@protocol TCMappingIgnore;
+
 @interface NSObject (TCMapping)
 
 
@@ -19,13 +26,13 @@
  @brief	property type support CGPoint, CGSize, etc...
  while, the mapping json string format as below:
  
- CGPoint <-- "{x,y}"
- CGVector <-- "{dx, dy}"
- CGSize <-- "{w, h}"
- CGRect <-- "{{x,y},{w, h}}"
- CGAffineTransform <-- "{a, b, c, d, tx, ty}"
- UIEdgeInsets <-- "{top, left, bottom, right}"
- UIOffset <-- "{horizontal, vertical}"
+ CGPoint <- "{x,y}"
+ CGVector <- "{dx, dy}"
+ CGSize <- "{w, h}"
+ CGRect <- "{{x,y},{w, h}}"
+ CGAffineTransform <- "{a, b, c, d, tx, ty}"
+ UIEdgeInsets <- "{top, left, bottom, right}"
+ UIOffset <- "{horizontal, vertical}"
  
  */
 
@@ -46,7 +53,7 @@
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
- [NSNull null] will be replace with an exact value while mapping.
+ NSNull.null will be replace with an exact value while mapping.
  
  @return the primary key dictionary
  */
@@ -58,13 +65,13 @@
 
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;
-+ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context;
++ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context;
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic;
-+ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context;
++ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context;
 
 - (void)tc_mappingWithDictionary:(NSDictionary *)dic;
-- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic;
+- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameDic;
 
 - (BOOL)tc_mappingValidate;
 
@@ -77,8 +84,8 @@
 + (void)tc_asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
 + (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
-+ (void)tc_asyncMappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
 
 @end

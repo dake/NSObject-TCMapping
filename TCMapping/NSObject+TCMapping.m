@@ -11,12 +11,6 @@
 #import <CoreGraphics/CGGeometry.h>
 #import <UIKit/UIGeometry.h>
 
-#if (__IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_7_0)
-@import CoreData;
-#else
-#import <CoreData/CoreData.h>
-#endif
-
 #import "TCMappingMeta.h"
 
 
@@ -152,7 +146,7 @@ NS_INLINE id mappingNSValueWithString(NSString *value, __unsafe_unretained TCMap
     return ret;
 }
 
-NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __unsafe_unretained TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class currentClass)
+NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __unsafe_unretained TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class curClass)
 {
     if (nil == meta) {
         return nil;
@@ -205,7 +199,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     NSString *fmtStr = typeMappingDic[propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
                         NSDateFormatter *fmt = tc_mapping_date_write_fmter();
-                        fmt.timeZone = [currentClass tc_dateTimeZone];
+                        fmt.timeZone = [curClass tc_dateTimeZone];
                         fmt.dateFormat = fmtStr;
                         ret = [fmt dateFromString:ret];
                     } else {
@@ -213,7 +207,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     }
                 } else if ([ret isKindOfClass:NSNumber.class]) { // NSDate <-- timestamp
                     BOOL ignore = NO;
-                    NSTimeInterval timestamp = [currentClass tc_timestampToSecondSince1970:((NSNumber *)ret).doubleValue ignoreReturn:&ignore];
+                    NSTimeInterval timestamp = [curClass tc_timestampToSecondSince1970:((NSNumber *)ret).doubleValue ignoreReturn:&ignore];
                     if (ignore) {
                         ret = nil;
                     } else {
@@ -239,7 +233,6 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
             default:
                 break;
         }
-        
     } else {
         if ([meta->_typeName hasPrefix:@"{"]) {
             // NSValue <- NSString
@@ -252,6 +245,53 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 
 
 #pragma mark - TCMapping
+
+static id tc_mappingWithDictionary(NSDictionary *dataDic,
+                                   NSDictionary<NSString *, NSString *> *inputNameDic,
+                                   id<TCMappingPersistentContext> context,
+                                   id target,
+                                   Class curClass,
+                                   BOOL useInputNameDicOnly);
+
+static NSArray *mappingArray(NSArray *value, id<TCMappingPersistentContext> context, Class klass)
+{
+    NSMutableArray *arry = [NSMutableArray array];
+    
+    for (NSDictionary *dic in value) {
+        if ([dic isKindOfClass:NSDictionary.class]) {
+            id obj = tc_mappingWithDictionary(dic, nil, context, nil, klass, NO);
+            if (nil != obj) {
+                [arry addObject:obj];
+            }
+        } else {
+            if ([dic isKindOfClass:klass]) {
+                [arry addObject:dic];
+            }
+        }
+    }
+    
+    return arry.count > 0 ? arry : nil;
+}
+
+static id databaseInstanceWithValue(NSDictionary *value, NSDictionary *nameDic, id<TCMappingPersistentContext> context, Class klass)
+{
+    // fill in primary keys
+    NSMutableDictionary *primaryKey = [klass tc_propertyForPrimaryKey].mutableCopy;
+    for (NSString *pKey in primaryKey) {
+        id tmpValue = value[nameDic[pKey]];
+        if (nil != tmpValue && tmpValue != (id)kCFNull) {
+            primaryKey[pKey] = tmpValue;
+        }
+        
+        if (primaryKey[pKey] == (id)kCFNull) {
+            primaryKey = nil;
+            break;
+        }
+    }
+    
+    return [context instanceForPrimaryKey:primaryKey class:klass];
+}
+
 
 @implementation NSObject (TCMapping)
 
@@ -295,10 +335,10 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry
 {
-    return [self tc_mappingWithArray:arry managerObjectContext:nil];
+    return [self tc_mappingWithArray:arry context:nil];
 }
 
-+ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context
++ (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context
 {
     if (nil == arry || ![arry isKindOfClass:NSArray.class] || arry.count < 1) {
         return nil;
@@ -307,7 +347,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     NSMutableArray *outArry = [NSMutableArray array];
     for (NSDictionary *dic in arry) {
         @autoreleasepool {
-            id obj = [self tc_mappingWithDictionary:dic managerObjectContext:context];
+            id obj = tc_mappingWithDictionary(dic, nil, context, nil, self, NO);
             if (nil != obj) {
                 [outArry addObject:obj];
             }
@@ -319,43 +359,115 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 
 + (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic
 {
-    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:nil targetBlock:nil useInputPropertyMappingOnly:NO];
+    return tc_mappingWithDictionary(dic, nil, nil, nil, self, NO);
 }
 
-+ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context
++ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context
 {
-    return [self tc_mappingWithDictionary:dic propertyMapping:nil context:context targetBlock:nil useInputPropertyMappingOnly:NO];
+    return tc_mappingWithDictionary(dic, nil, context, nil, self, NO);
 }
 
-+ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dataDic
-                         propertyMapping:(NSDictionary<NSString *, NSString *> *)inputNameDic
-                                 context:(NSManagedObjectContext *)context
-                             targetBlock:(id(^)(void))targetBlock
-             useInputPropertyMappingOnly:(BOOL)useInputNameDicOnly
+- (void)tc_mappingWithDictionary:(NSDictionary *)dic
+{
+    [self tc_mappingWithDictionary:dic propertyNameMapping:nil];
+}
+
+- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameDic
+{
+    tc_mappingWithDictionary(dic, extraNameDic, nil, self, self.class, NO);
+}
+
+
+#pragma mark - async
+
+NS_INLINE dispatch_queue_t tc_mappingQueue(void)
+{
+    return dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
+}
+
+
++ (void)tc_asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish
+{
+    [self tc_asyncMappingWithArray:arry context:nil inQueue:nil finish:finish];
+}
+
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish
+{
+    [self tc_asyncMappingWithDictionary:dic context:nil inQueue:nil finish:finish];
+}
+
++ (void)tc_asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish
+{
+    [self tc_asyncMappingWithArray:arry context:nil inQueue:queue finish:finish];
+}
+
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
+{
+    [self tc_asyncMappingWithDictionary:dic context:nil inQueue:queue finish:finish];
+}
+
+
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
+{
+    if (nil == finish) {
+        return;
+    }
+    
+    dispatch_async(queue ?: tc_mappingQueue(), ^{
+        @autoreleasepool {
+            id data = [self tc_mappingWithDictionary:dic context:context];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                finish(data);
+            });
+        }
+    });
+}
+
++ (void)tc_asyncMappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish
+{
+    if (nil == finish) {
+        return;
+    }
+    
+    dispatch_async(queue ?: tc_mappingQueue(), ^{
+        @autoreleasepool {
+            NSMutableArray *dataList = [self tc_mappingWithArray:arry context:context];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                finish(dataList);
+            });
+        }
+    });
+}
+
+@end
+
+static id tc_mappingWithDictionary(NSDictionary *dataDic,
+                                   NSDictionary<NSString *, NSString *> *inputNameDic,
+                                   id<TCMappingPersistentContext> context,
+                                   id target,
+                                   Class curClass,
+                                   BOOL useInputNameDicOnly)
 {
     if (nil == dataDic || ![dataDic isKindOfClass:NSDictionary.class] || dataDic.count < 1) {
         return nil;
     }
     
-    NSObject *obj = nil;
-    if (nil != targetBlock) {
-        obj = targetBlock();
-    }
-    Class currentClass = obj.class ?: self;
-    
-    NSDictionary *typeDic = currentClass.tc_propertyTypeFormat;
+    NSDictionary *typeDic = [curClass tc_propertyTypeFormat];
     NSDictionary *nameDic = inputNameDic;
-    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(currentClass);
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(curClass);
     
     if (!useInputNameDicOnly || inputNameDic.count < 1) {
         NSDictionary *inputMappingDic = inputNameDic;
         if (inputMappingDic.count < 1) {
-            inputMappingDic = currentClass.tc_propertyNameMapping;
+            inputMappingDic = [curClass tc_propertyNameMapping];
         }
         nameDic = nameMappingDicFor(inputMappingDic, metaDic.allKeys);
     }
     
-    BOOL ignoreNSNull = currentClass.tc_mappingIgnoreNSNull;
+    
+    NSObject *obj = target;
+    BOOL ignoreNSNull = [curClass tc_mappingIgnoreNSNull];
+    
     for (__unsafe_unretained NSString *propertyName in nameDic) {
         if (nil == propertyName || (id)kCFNull == propertyName || (id)kCFNull == nameDic[propertyName]) {
             continue;
@@ -387,9 +499,9 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     __unsafe_unretained Class dicValueClass = classForType(typeDic[propertyName]);
                     if (Nil != dicValueClass) {
                         NSMutableDictionary *tmpDic = [NSMutableDictionary dictionary];
-                        NSDictionary *dicValueNameDic = nameMappingDicFor(dicValueClass.tc_propertyNameMapping, tc_propertiesUntilRootClass(dicValueClass).allKeys);
+                        NSDictionary *dicValueNameDic = nameMappingDicFor([dicValueClass tc_propertyNameMapping], tc_propertiesUntilRootClass(dicValueClass).allKeys);
                         for (id dicKey in valueDataDic) {
-                            id tmpValue = [dicValueClass tc_mappingWithDictionary:valueDataDic[dicKey] propertyMapping:dicValueNameDic context:context targetBlock:nil useInputPropertyMappingOnly:YES];
+                            id tmpValue = tc_mappingWithDictionary(valueDataDic[dicKey], dicValueNameDic, context, nil, dicValueClass, YES);
                             if (nil != tmpValue) {
                                 tmpDic[dicKey] = tmpValue;
                             }
@@ -400,25 +512,21 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                         value = [klass dictionaryWithDictionary:valueDataDic];
                     }
                 } else {
-                    value = [klass tc_mappingWithDictionary:valueDataDic propertyMapping:nil context:context targetBlock:nil == obj ? nil : ^{
-                        return [obj valueForKey:propertyName];
-                    } useInputPropertyMappingOnly:NO];
+                    value = tc_mappingWithDictionary(valueDataDic, nil, context, nil == obj ? nil : [obj valueForKey:propertyName], klass, NO);
                 }
             } else {
                 value = nil;
             }
-            
         } else if ([value isKindOfClass:NSArray.class]) {
             __unsafe_unretained NSArray *valueDataArry = (NSArray *)value;
             if (valueDataArry.count > 0) {
-                
                 __unsafe_unretained TCMappingMeta *meta = metaDic[propertyName];
                 if (Nil == meta->_typeClass || meta->_classType != kTCMappingClassTypeNSArray) {
                     value = nil;
                 } else {
                     __unsafe_unretained Class arrayItemType = classForType(typeDic[propertyName]);
                     if (Nil != arrayItemType) {
-                        value = [arrayItemType mappingArray:valueDataArry withContext:context];
+                        value = mappingArray(valueDataArry, context, arrayItemType);
                     }
                     
                     if (nil != value && ![value isKindOfClass:meta->_typeClass]) {
@@ -427,7 +535,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 }
             }
         } else if (value != (id)kCFNull) {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, metaDic[propertyName], typeDic, currentClass);
+            value = valueForBaseTypeOfPropertyName(propertyName, value, metaDic[propertyName], typeDic, curClass);
         }
         
         if (nil == value) {
@@ -437,10 +545,10 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
         }
         
         if (nil == obj) {
-            if (nil == context) {
-                obj = [[currentClass alloc] init];
+            if (nil == context || ![context respondsToSelector:@selector(instanceForPrimaryKey:class:)]) {
+                obj = [[curClass alloc] init];
             } else {
-                obj = [currentClass coreDataInstanceWithValue:dataDic nameMappingDic:nameDic context:context];
+                obj = databaseInstanceWithValue(dataDic, nameDic, context, curClass);
             }
         }
         
@@ -449,157 +557,6 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
     
     return obj.tc_mappingValidate ? obj : nil;
 }
-
-+ (instancetype)coreDataInstanceWithValue:(NSDictionary *)value nameMappingDic:(NSDictionary *)nameDic context:(NSManagedObjectContext *)context
-{
-    // fill up primary keys
-    NSMutableDictionary *primaryKey = self.tc_propertyForPrimaryKey.mutableCopy;
-    for (NSString *pKey in primaryKey) {
-        id tmpValue = value[nameDic[pKey]];
-        if (nil != tmpValue && tmpValue != (id)kCFNull) {
-            primaryKey[pKey] = tmpValue;
-        }
-    }
-    
-    __block NSManagedObject *tempObj = nil;
-    [context performBlockAndWait:^{
-        if (primaryKey.count > 0) {
-            tempObj = [self fetchDataFromDBWithPrimaryKey:primaryKey inContext:context];
-        }
-        
-        if (nil == tempObj) {
-            tempObj = [NSEntityDescription insertNewObjectForEntityForName:NSStringFromClass(self) inManagedObjectContext:context];
-        }
-    }];
-    
-    return tempObj;
-}
-
-
-+ (instancetype)fetchDataFromDBWithPrimaryKey:(NSDictionary *)primaryKey inContext:(NSManagedObjectContext *)context
-{
-    NSMutableString *fmt = [NSMutableString string];
-    NSArray *allKeys = primaryKey.allKeys;
-    NSUInteger count = allKeys.count;
-    for (NSInteger i = 0; i < count; ++i) {
-        NSString *key = allKeys[i];
-        if (i < count - 1) {
-            [fmt appendFormat:@"%@==%%@&&", key];
-        } else {
-            [fmt appendFormat:@"%@==%%@", key];
-        }
-    }
-    
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:fmt argumentArray:primaryKey.allValues];
-    NSFetchRequest *fetchRequest = [NSFetchRequest fetchRequestWithEntityName:NSStringFromClass(self)];
-    fetchRequest.predicate = predicate;
-    fetchRequest.fetchLimit = 1;
-    //    fetchRequest.returnsObjectsAsFaults
-    
-    NSError *error = nil;
-    NSArray *array = [context executeFetchRequest:fetchRequest error:&error];
-    NSAssert(nil == error, @"%@", error.localizedDescription);
-    
-    return array.lastObject;
-}
-
-
-+ (NSArray *)mappingArray:(NSArray *)value withContext:(NSManagedObjectContext *)context
-{
-    NSMutableArray *arry = [NSMutableArray array];
-    
-    for (NSDictionary *dic in value) {
-        if ([dic isKindOfClass:NSDictionary.class]) {
-            id obj = [self tc_mappingWithDictionary:dic managerObjectContext:context];
-            if (nil != obj) {
-                [arry addObject:obj];
-            }
-        } else {
-            if ([dic isKindOfClass:self]) {
-                [arry addObject:dic];
-            }
-        }
-    }
-    
-    return arry.count > 0 ? arry : nil;
-}
-
-- (void)tc_mappingWithDictionary:(NSDictionary *)dic
-{
-    [self tc_mappingWithDictionary:dic propertyNameMapping:nil];
-}
-
-- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameMappingDic
-{
-    [self.class tc_mappingWithDictionary:dic propertyMapping:extraNameMappingDic context:nil targetBlock:^{
-        return self;
-    } useInputPropertyMappingOnly:NO];
-}
-
-
-
-#pragma mark - async
-
-+ (dispatch_queue_t)tc_mappingQueue
-{
-    return dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0);
-}
-
-
-+ (void)tc_asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish
-{
-    [self tc_asyncMappingWithArray:arry managerObjectContext:nil inQueue:nil finish:finish];
-}
-
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish
-{
-    [self tc_asyncMappingWithDictionary:dic managerObjectContext:nil inQueue:nil finish:finish];
-}
-
-+ (void)tc_asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish
-{
-    [self tc_asyncMappingWithArray:arry managerObjectContext:nil inQueue:queue finish:finish];
-}
-
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
-{
-    [self tc_asyncMappingWithDictionary:dic managerObjectContext:nil inQueue:queue finish:finish];
-}
-
-
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
-{
-    if (nil == finish) {
-        return;
-    }
-    
-    dispatch_async(queue ?: self.tc_mappingQueue, ^{
-        @autoreleasepool {
-            id data = [self tc_mappingWithDictionary:dic managerObjectContext:context];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                finish(data);
-            });
-        }
-    });
-}
-
-+ (void)tc_asyncMappingWithArray:(NSArray *)arry managerObjectContext:(NSManagedObjectContext *)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish
-{
-    if (nil == finish) {
-        return;
-    }
-    
-    dispatch_async(queue ?: self.tc_mappingQueue, ^{
-        @autoreleasepool {
-            NSMutableArray *dataList = [self tc_mappingWithArray:arry managerObjectContext:context];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                finish(dataList);
-            });
-        }
-    });
-}
-
-@end
 
 
 #pragma mark - NSDictionary+TCMapping
@@ -613,7 +570,6 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
 }
 
 @end
-
 
 
 #pragma mark - NSString+TC_NSNumber

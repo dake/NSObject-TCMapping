@@ -26,9 +26,9 @@
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        TCMappingMeta *meta = metaDic[key];
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter) {
             continue;
         }
@@ -40,8 +40,9 @@
             continue;
         }
         NSObject *value = [self valueForKey:key];
-        NSAssert(nil == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
-        if (nil == value || [value respondsToSelector:@selector(encodeWithCoder:)]) {
+        BOOL check = nil == value || [value respondsToSelector:@selector(encodeWithCoder:)];
+        NSAssert(check, @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
+        if (check) {
             [coder encodeObject:value forKey:mapKey];
         }
     }
@@ -61,9 +62,9 @@
     }
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        TCMappingMeta *meta = metaDic[key];
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (meta->_ignoreNSCoding || NULL == meta->_setter) {
             continue;
         }
@@ -82,6 +83,8 @@
 @end
 
 
+#pragma mark - TCNSCopying
+
 @implementation NSObject (TCNSCopying)
 
 + (NSArray<NSString *> *)tc_propertyCopyIgnore
@@ -92,12 +95,16 @@
 - (instancetype)tc_copy
 {
     NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use copy instead of tc_copy!");
+    if ([TCMappingMeta isNSTypeForClass:self.class]) {
+        return nil;
+    }
+    
     typeof(self) copy = [[self.class alloc] init];
     
     NSArray<NSString *> *ignoreList = self.class.tc_propertyCopyIgnore;
-    NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic.allKeys) {
-        TCMappingMeta *meta = metaDic[key];
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (NULL == meta->_getter || NULL == meta->_setter || [ignoreList containsObject:key]) {
             continue;
         }
@@ -111,18 +118,67 @@
 @end
 
 
+#pragma mark - TCEqual
+
 @implementation NSObject (TCEqual)
 
-// TODO:
 - (NSUInteger)tc_hash
 {
     NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use hash instead of tc_hash!");
-    return 0;
+    if ([TCMappingMeta isNSTypeForClass:self.class]) {
+        return (NSUInteger)((__bridge void *)self);
+    }
+    
+    NSUInteger value = 0;
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    for (NSString *key in metaDic.allKeys) {
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
+        if (NULL == meta->_getter) {
+            continue;
+        }
+        
+        value ^= [[self valueForKey:NSStringFromSelector(meta->_getter)] hash];
+    }
+    
+    if (0 == value) {
+        value = (NSUInteger)((__bridge void *)self);
+    }
+    
+    return value;
 }
 
 - (BOOL)tc_isEqual:(id)object
 {
-    return NO;
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use isEqual: instead of tc_isEqual:!");
+    
+    if (self == object) {
+        return YES;
+    }
+    
+    if (![object isMemberOfClass:self.class] || self.hash != [object hash]) {
+        return NO;
+    }
+    
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    for (NSString *key in metaDic.allKeys) {
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
+        if (NULL == meta->_getter) {
+            continue;
+        }
+        
+        NSString *getter = NSStringFromSelector(meta->_getter);
+        id left = [self valueForKey:getter];
+        id right = [object valueForKey:getter];
+        if (left == right) {
+            continue;
+        } else if (nil == left || nil == right) {
+            return NO;
+        } else if ([left isEqual:right]) {
+            continue;
+        }
+    }
+    
+    return YES;
 }
 
 @end

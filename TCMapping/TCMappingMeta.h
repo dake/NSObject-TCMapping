@@ -28,18 +28,10 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     // id type
     kTCMappingClassTypeId,
     kTCMappingClassTypeBlock,
-        kTCMappingClassTypeClass,
+    kTCMappingClassTypeClass,
+    kTCMappingClassTypeVoid,
     
     // int, double, etc...
-    kTCMappingClassTypeVoid,
-
-    
-    kTCMappingClassTypeCPointer,
-    kTCMappingClassTypeCString,
-    kTCMappingClassTypeCArray,
-    kTCMappingClassTypeUnion,
-    kTCMappingClassTypeSEL,
-    
     kTCMappingClassTypeBool,
     kTCMappingClassTypeInt64,
     kTCMappingClassTypeUInt64,
@@ -50,11 +42,15 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     kTCMappingClassTypeInt8,
     kTCMappingClassTypeUInt8,
     
-    
     kTCMappingClassTypeFloat,
     kTCMappingClassTypeDouble,
     kTCMappingClassTypeLongDouble,
     
+    kTCMappingClassTypeCPointer,
+    kTCMappingClassTypeCString, // char * or char const *
+    kTCMappingClassTypeCArray,
+    kTCMappingClassTypeUnion,
+    kTCMappingClassTypeSEL,
     
     kTCMappingClassTypeBaseScalarUnkown,
     

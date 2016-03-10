@@ -27,7 +27,7 @@
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
-    for (NSString *key in metaDic.allKeys) {
+    for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter) {
             continue;
@@ -40,11 +40,9 @@
             continue;
         }
         NSObject *value = [self valueForKey:key];
-        BOOL check = nil == value || [value respondsToSelector:@selector(encodeWithCoder:)];
-        NSAssert(check, @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
-        if (check) {
-            [coder encodeObject:value forKey:mapKey];
-        }
+        NSAssert(nil == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
+
+        [coder encodeObject:value forKey:mapKey];
     }
 }
 
@@ -63,7 +61,7 @@
     
     NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
-    for (NSString *key in metaDic.allKeys) {
+    for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (meta->_ignoreNSCoding || NULL == meta->_setter) {
             continue;
@@ -103,7 +101,7 @@
     
     NSArray<NSString *> *ignoreList = self.class.tc_propertyCopyIgnore;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
-    for (NSString *key in metaDic.allKeys) {
+    for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (NULL == meta->_getter || NULL == meta->_setter || [ignoreList containsObject:key]) {
             continue;
@@ -131,7 +129,7 @@
     
     NSUInteger value = 0;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
-    for (NSString *key in metaDic.allKeys) {
+    for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (NULL == meta->_getter) {
             continue;
@@ -160,7 +158,7 @@
     }
     
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
-    for (NSString *key in metaDic.allKeys) {
+    for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         if (NULL == meta->_getter) {
             continue;

@@ -58,9 +58,9 @@ NS_INLINE TCMappingClassType classTypeForScalarType(const char *typeStr)
         return kTCMappingClassTypeInt64;
     } else if (type == @encode(uint64_t)[0]) {
         return kTCMappingClassTypeUInt64;
-    } else if (type == @encode(int32_t)[0] || type == 'l') {
+    } else if (type == @encode(int32_t)[0] || type == @encode(long)[0]) {
         return kTCMappingClassTypeInt32;
-    } else if (type == @encode(uint32_t)[0] || type == 'L') {
+    } else if (type == @encode(uint32_t)[0] || type == @encode(unsigned long)[0]) {
         return kTCMappingClassTypeUInt32;
     } else if (type == @encode(float)[0]) {
         return kTCMappingClassTypeFloat;
@@ -169,7 +169,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                             NSRange range = [typeName rangeOfString:@"<"];
                             if (range.location != NSNotFound) {
                                 
-                                NSString *ignoreProtocol = [typeName substringFromIndex:range.location];
+                                NSString *ignoreProtocol = [typeName substringWithRange:NSMakeRange(range.location + 1, typeName.length - range.location - 2)];
                                 if ([ignoreProtocol rangeOfString:kMappingIgnorePtl].location != NSNotFound) {
                                     ignoreMapping = YES;
                                 }
@@ -226,14 +226,14 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                 
             case 'G': {
                 if (NULL != attrs[i].value) {
-                    getter = NSSelectorFromString([NSString stringWithUTF8String:attrs[i].value]);
+                    getter = NSSelectorFromString(@(attrs[i].value));
                 }
                 break;
             }
                 
             case 'S': {
                 if (NULL != attrs[i].value) {
-                    setter = NSSelectorFromString([NSString stringWithUTF8String:attrs[i].value]);
+                    setter = NSSelectorFromString(@(attrs[i].value));
                 }
                 break;
             }
@@ -251,40 +251,40 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         return nil;
     }
     
-    NSString *propertyName = [NSString stringWithUTF8String:property_getName(property)];
-    if (nil != propertyName) {
-        TCMappingMeta *meta = [[TCMappingMeta alloc] init];
-        meta->_propertyName = propertyName;
-        meta->_typeName = typeName;
-        meta->_isObj = isObj;
-        meta->_typeClass = typeClass;
-        meta->_classType = classType;
-        meta->_ignoreCopying = ignoreCopying;
-        meta->_ignoreMapping = ignoreMapping;
-        meta->_ignoreNSCoding = ignoreNSCoding;
-        
-        if (NULL == getter) {
-            getter = NSSelectorFromString(propertyName);
-        }
-        if ([klass instancesRespondToSelector:getter]) {
-            meta->_getter = getter;
-        }
-        
-        if (NULL == setter) {
-            setter = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:", [propertyName substringToIndex:1].uppercaseString, [propertyName substringFromIndex:1]]);
-        }
-        if ([klass instancesRespondToSelector:setter]) {
-            meta->_setter = setter;
-        }
-        
-        if (kTCMappingClassTypeUnknown == meta->_classType && Nil != typeClass) {
-            meta->_classType = classTypeForNSType(typeClass);
-        }
-        
-        return meta;
+    NSString *propertyName = @(property_getName(property));
+    if (nil == propertyName) {
+        return nil;
     }
     
-    return nil;
+    TCMappingMeta *meta = [[TCMappingMeta alloc] init];
+    meta->_propertyName = propertyName;
+    meta->_typeName = typeName;
+    meta->_isObj = isObj;
+    meta->_typeClass = typeClass;
+    meta->_classType = classType;
+    meta->_ignoreCopying = ignoreCopying;
+    meta->_ignoreMapping = ignoreMapping;
+    meta->_ignoreNSCoding = ignoreNSCoding;
+    
+    if (NULL == getter) {
+        getter = NSSelectorFromString(propertyName);
+    }
+    if ([klass instancesRespondToSelector:getter]) {
+        meta->_getter = getter;
+    }
+    
+    if (NULL == setter) {
+        setter = NSSelectorFromString([NSString stringWithFormat:@"set%@%@:", [propertyName substringToIndex:1].uppercaseString, [propertyName substringFromIndex:1]]);
+    }
+    if ([klass instancesRespondToSelector:setter]) {
+        meta->_setter = setter;
+    }
+    
+    if (kTCMappingClassTypeUnknown == meta->_classType && Nil != typeClass) {
+        meta->_classType = classTypeForNSType(typeClass);
+    }
+    
+    return meta;
 }
 
 

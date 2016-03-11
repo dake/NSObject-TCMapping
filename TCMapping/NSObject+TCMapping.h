@@ -42,14 +42,14 @@
  
  @return the mapping dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSString *> *)tc_propertyNameMapping;
++ (NSDictionary<NSString *, NSString *> *)tc_propertyNameMapping;
 
 /**
  @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
  
  @return the mapping dictionary
  */
-+ (NSDictionary<__kindof NSString *, id> *)tc_propertyTypeFormat;
++ (NSDictionary<NSString *, id> *)tc_propertyTypeFormat;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
@@ -57,7 +57,7 @@
  
  @return the primary key dictionary
  */
-+ (NSDictionary<__kindof NSString *, __kindof NSObject *> *)tc_propertyForPrimaryKey;
++ (NSDictionary<NSString *, id> *)tc_propertyForPrimaryKey;
 
 + (NSTimeZone *)tc_dateTimeZone;
 + (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;

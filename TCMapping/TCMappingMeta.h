@@ -9,63 +9,64 @@
 #import <Foundation/Foundation.h>
 
 
-typedef NS_ENUM (NSUInteger, TCMappingClassType) {
-    kTCMappingClassTypeUnknown = 0,
+typedef NS_ENUM (NSUInteger, TCMappingType) {
+    kTCMappingTypeUnknown = 0,
     
     // sys type
-    kTCMappingClassTypeNSString,
-    kTCMappingClassTypeNSValue,
-    kTCMappingClassTypeNSNumber,
-    kTCMappingClassTypeNSDate,
-    kTCMappingClassTypeNSURL,
-    kTCMappingClassTypeNSArray,
-    kTCMappingClassTypeNSDictionary,
-    kTCMappingClassTypeNSSet,
-    kTCMappingClassTypeNSHashTable,
-    kTCMappingClassTypeNSData,
-    kTCMappingClassTypeNSNull,
+    kTCMappingTypeNSString,
+    kTCMappingTypeNSValue,
+    kTCMappingTypeNSNumber,
+    kTCMappingTypeNSDate,
+    kTCMappingTypeNSURL,
+    kTCMappingTypeNSArray,
+    kTCMappingTypeNSDictionary,
+    kTCMappingTypeNSSet,
+    kTCMappingTypeNSHashTable,
+    kTCMappingTypeNSData,
+    kTCMappingTypeNSNull,
+    kTCMappingTypeNSAttributedString,
     
     // id type
-    kTCMappingClassTypeId,
-    kTCMappingClassTypeBlock,
-    kTCMappingClassTypeClass,
-    kTCMappingClassTypeVoid,
+    kTCMappingTypeId,
+    kTCMappingTypeBlock,
+    kTCMappingTypeClass,
+    kTCMappingTypeVoid,
     
     // int, double, etc...
-    kTCMappingClassTypeBool,
-    kTCMappingClassTypeInt64,
-    kTCMappingClassTypeUInt64,
-    kTCMappingClassTypeInt32,
-    kTCMappingClassTypeUInt32,
-    kTCMappingClassTypeInt16,
-    kTCMappingClassTypeUInt16,
-    kTCMappingClassTypeInt8,
-    kTCMappingClassTypeUInt8,
+    kTCMappingTypeBool,
+    kTCMappingTypeInt64,
+    kTCMappingTypeUInt64,
+    kTCMappingTypeInt32,
+    kTCMappingTypeUInt32,
+    kTCMappingTypeInt16,
+    kTCMappingTypeUInt16,
+    kTCMappingTypeInt8,
+    kTCMappingTypeUInt8,
     
-    kTCMappingClassTypeFloat,
-    kTCMappingClassTypeDouble,
-    kTCMappingClassTypeLongDouble,
+    kTCMappingTypeFloat,
+    kTCMappingTypeDouble,
+    kTCMappingTypeLongDouble,
     
-    kTCMappingClassTypeCPointer,
-    kTCMappingClassTypeCString, // char * or char const *
-    kTCMappingClassTypeCArray,
-    kTCMappingClassTypeUnion,
-    kTCMappingClassTypeSEL,
+    kTCMappingTypeCPointer,
+    kTCMappingTypeCString, // char * or char const *
+    kTCMappingTypeCArray,
+    kTCMappingTypeUnion,
+    kTCMappingTypeSEL,
     
-    kTCMappingClassTypeBaseScalarUnkown,
+    kTCMappingTypeBaseScalarUnkown,
     
     // struct
-    kTCMappingClassTypeCGPoint,
-    kTCMappingClassTypeCGVector,
-    kTCMappingClassTypeCGSize,
-    kTCMappingClassTypeCGRect,
-    kTCMappingClassTypeCGAffineTransform,
-    kTCMappingClassTypeUIEdgeInsets,
-    kTCMappingClassTypeUIOffset,
-    kTCMappingClassTypeNSRange,
-    kTCMappingClassTypeUIRectEdge,
+    kTCMappingTypeCGPoint,
+    kTCMappingTypeCGVector,
+    kTCMappingTypeCGSize,
+    kTCMappingTypeCGRect,
+    kTCMappingTypeCGAffineTransform,
+    kTCMappingTypeUIEdgeInsets,
+    kTCMappingTypeUIOffset,
+    kTCMappingTypeNSRange,
+    kTCMappingTypeUIRectEdge,
     
-    kTCMappingClassTypeStructUnkown,
+    kTCMappingTypeStructUnkown,
 };
 
 
@@ -76,11 +77,12 @@ typedef NS_ENUM (NSUInteger, TCMappingClassType) {
     NSString *_typeName;
     NSString *_propertyName;
     Class _typeClass;
-    TCMappingClassType _classType;
+    TCMappingType _classType;
     
     SEL _getter;
     SEL _setter;
     BOOL _ignoreMapping;
+    BOOL _ignoreJSONMapping;
     BOOL _ignoreNSCoding;
     BOOL _ignoreCopying;
 }

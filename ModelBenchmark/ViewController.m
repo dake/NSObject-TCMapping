@@ -17,6 +17,8 @@
 #import "MJWeiboModel.h"
 #import "TCWeiboModel.h"
 
+#import "NSObject+TCJSONMapping.h"
+
 //#import "ModelBenchmark-Swift.h"
 
 /*
@@ -161,7 +163,22 @@
         if (!user.htmlURL) NSLog(@"error");
         
         
-        printf("     N/A   ");
+        [holder removeAllObjects];
+        begin = CACurrentMediaTime();
+        @autoreleasepool {
+            for (int i = 0; i < count; i++) {
+                NSDictionary *json = [user tc_JSONObject];
+                [holder addObject:json];
+            }
+        }
+        end = CACurrentMediaTime();
+        if ([NSJSONSerialization isValidJSONObject:[user tc_JSONObject]]) {
+            printf("%8.2f   ", (end - begin) * 1000);
+        } else {
+            printf("   error   ");
+        }
+        
+        [holder removeAllObjects];
         begin = CACurrentMediaTime();
         @autoreleasepool {
             for (int i = 0; i < count; i++) {
@@ -464,9 +481,25 @@
         end = CACurrentMediaTime();
         printf("TCModel:         %8.2f   ", (end - begin) * 1000);
         
-        printf("     N/A   ");
-        
         TCWeiboStatus *feed = [TCWeiboStatus tc_mappingWithDictionary:json];
+        
+        [holder removeAllObjects];
+        begin = CACurrentMediaTime();
+        @autoreleasepool {
+            for (int i = 0; i < count; i++) {
+                NSDictionary *json = [feed tc_JSONObject];
+                [holder addObject:json];
+            }
+        }
+        end = CACurrentMediaTime();
+        if ([NSJSONSerialization isValidJSONObject:[feed tc_JSONObject]]) {
+            printf("%8.2f   ", (end - begin) * 1000);
+        } else {
+            printf("   error   ");
+        }
+
+        
+        [holder removeAllObjects];
         begin = CACurrentMediaTime();
         @autoreleasepool {
             for (int i = 0; i < count; i++) {

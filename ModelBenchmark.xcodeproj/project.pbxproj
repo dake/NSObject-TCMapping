@@ -10,6 +10,7 @@
 		B70F4B171BDF547E00EB743A /* TCWeiboModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F4B161BDF547E00EB743A /* TCWeiboModel.m */; };
 		B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */; };
 		B711B6A11C8833EE00BC437C /* TCMappingMeta.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6A01C8833EE00BC437C /* TCMappingMeta.m */; };
+		B7187BBD1C92DB0200C5F77A /* NSObject+TCJSONMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */; };
 		B7AC83581BDE3C9000679B78 /* NSObject+TCMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */; };
 		B7AC835F1BDE3C9C00679B78 /* NSObject+YYModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835B1BDE3C9C00679B78 /* NSObject+YYModel.m */; };
 		B7AC83601BDE3C9C00679B78 /* YYClassInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835D1BDE3C9C00679B78 /* YYClassInfo.m */; };
@@ -104,6 +105,8 @@
 		B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCNSCoding.m"; sourceTree = "<group>"; };
 		B711B69F1C8833EE00BC437C /* TCMappingMeta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingMeta.h; sourceTree = "<group>"; };
 		B711B6A01C8833EE00BC437C /* TCMappingMeta.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingMeta.m; sourceTree = "<group>"; };
+		B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCJSONMapping.h"; sourceTree = "<group>"; };
+		B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCJSONMapping.m"; sourceTree = "<group>"; };
 		B7AC83561BDE3C9000679B78 /* NSObject+TCMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCMapping.h"; sourceTree = "<group>"; };
 		B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCMapping.m"; sourceTree = "<group>"; };
 		B7AC835A1BDE3C9C00679B78 /* NSObject+YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+YYModel.h"; sourceTree = "<group>"; };
@@ -278,6 +281,8 @@
 		B7AC83551BDE3C9000679B78 /* TCMapping */ = {
 			isa = PBXGroup;
 			children = (
+				B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */,
+				B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */,
 				B711B69F1C8833EE00BC437C /* TCMappingMeta.h */,
 				B711B6A01C8833EE00BC437C /* TCMappingMeta.m */,
 				B711B6901C87F44700BC437C /* NSObject+TCNSCoding.h */,
@@ -784,6 +789,7 @@
 				D9B1947F1BAC737000F93933 /* GitHubUser.m in Sources */,
 				D9B194821BAC737000F93933 /* MTWeiboModel.m in Sources */,
 				D9EB03E91BD64D1E00B3E0F5 /* NSObject+FEMKVCExtension.m in Sources */,
+				B7187BBD1C92DB0200C5F77A /* NSObject+TCJSONMapping.m in Sources */,
 				D9B193811BAC714D00F93933 /* main.m in Sources */,
 				D9EB04041BD64D1E00B3E0F5 /* NSObject+MTLComparisonAdditions.m in Sources */,
 				D9EB040A1BD64D1E00B3E0F5 /* MJProperty.m in Sources */,

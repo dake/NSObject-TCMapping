@@ -15,6 +15,9 @@
 @protocol TCMappingIgnore
 @end
 
+@protocol TCJSONMappingIgnore
+@end
+
 @protocol NSCodingIgnore
 @end
 
@@ -23,110 +26,116 @@
 
 
 
-NS_INLINE TCMappingClassType classTypeForStructType(const char *type)
+
+
+NS_INLINE TCMappingType typeForStructType(const char *type)
 {
     if (strcmp(type, @encode(CGPoint)) == 0) {
-        return kTCMappingClassTypeCGPoint;
+        return kTCMappingTypeCGPoint;
     } else if (strcmp(type, @encode(CGSize)) == 0) {
-        return kTCMappingClassTypeCGSize;
+        return kTCMappingTypeCGSize;
     } else if (strcmp(type, @encode(CGRect)) == 0) {
-        return kTCMappingClassTypeCGRect;
-    } else if (strcmp(type, @encode(CGVector)) == 0) {
-        return kTCMappingClassTypeCGVector;
+        return kTCMappingTypeCGRect;
     } else if (strcmp(type, @encode(UIEdgeInsets)) == 0) {
-        return kTCMappingClassTypeUIEdgeInsets;
+        return kTCMappingTypeUIEdgeInsets;
     } else if (strcmp(type, @encode(CGAffineTransform)) == 0) {
-        return kTCMappingClassTypeCGAffineTransform;
+        return kTCMappingTypeCGAffineTransform;
     } else if (strcmp(type, @encode(UIOffset)) == 0) {
-        return kTCMappingClassTypeUIOffset;
+        return kTCMappingTypeUIOffset;
     } else if (strcmp(type, @encode(NSRange)) == 0) {
-        return kTCMappingClassTypeNSRange;
+        return kTCMappingTypeNSRange;
+    } else if (strcmp(type, @encode(CGVector)) == 0) {
+        return kTCMappingTypeCGVector;
     } else if (strcmp(type, @encode(UIRectEdge)) == 0) {
-        return kTCMappingClassTypeUIRectEdge;
+        return kTCMappingTypeUIRectEdge;
     }  else {
-        return kTCMappingClassTypeStructUnkown;
+        return kTCMappingTypeStructUnkown;
     }
 }
 
-NS_INLINE TCMappingClassType classTypeForScalarType(const char *typeStr)
+NS_INLINE TCMappingType typeForScalarType(const char *typeStr)
 {
     char type = typeStr[0];
     
     if (type == @encode(BOOL)[0]) {
-        return kTCMappingClassTypeBool;
+        return kTCMappingTypeBool;
     } else if (type == @encode(int64_t)[0]) {
-        return kTCMappingClassTypeInt64;
+        return kTCMappingTypeInt64;
     } else if (type == @encode(uint64_t)[0]) {
-        return kTCMappingClassTypeUInt64;
+        return kTCMappingTypeUInt64;
     } else if (type == @encode(int32_t)[0] || type == @encode(long)[0]) {
-        return kTCMappingClassTypeInt32;
+        return kTCMappingTypeInt32;
     } else if (type == @encode(uint32_t)[0] || type == @encode(unsigned long)[0]) {
-        return kTCMappingClassTypeUInt32;
+        return kTCMappingTypeUInt32;
     } else if (type == @encode(float)[0]) {
-        return kTCMappingClassTypeFloat;
+        return kTCMappingTypeFloat;
     } else if (type == @encode(double)[0]) {
-        return kTCMappingClassTypeDouble;
+        return kTCMappingTypeDouble;
     } else if (type == @encode(long double)[0]) {
-        return kTCMappingClassTypeLongDouble;
+        return kTCMappingTypeLongDouble;
     } else if (type == @encode(Class)[0]) {
-        return kTCMappingClassTypeClass;
+        return kTCMappingTypeClass;
     } else if (type == @encode(char *)[0] || strcmp(typeStr, @encode(const char *)) == 0) {
-        return kTCMappingClassTypeCString;
+        return kTCMappingTypeCString;
     } else if (type == @encode(int8_t)[0]) {
-        return kTCMappingClassTypeInt8;
+        return kTCMappingTypeInt8;
     } else if (type == @encode(uint8_t)[0]) {
-        return kTCMappingClassTypeUInt8;
+        return kTCMappingTypeUInt8;
     } else if (type == @encode(int16_t)[0]) {
-        return kTCMappingClassTypeInt16;
+        return kTCMappingTypeInt16;
     } else if (type == @encode(uint16_t)[0]) {
-        return kTCMappingClassTypeUInt16;
+        return kTCMappingTypeUInt16;
     } else if (type == @encode(SEL)[0]) {
-        return kTCMappingClassTypeSEL;
+        return kTCMappingTypeSEL;
     } else if (type == @encode(void)[0]) {
-        return kTCMappingClassTypeVoid;
+        return kTCMappingTypeVoid;
     } else {
-        return kTCMappingClassTypeBaseScalarUnkown;
+        return kTCMappingTypeBaseScalarUnkown;
     }
 }
 
-NS_INLINE TCMappingClassType classTypeForNSType(Class typeClass)
+NS_INLINE TCMappingType typeForNSType(Class typeClass)
 {
     if ([typeClass isSubclassOfClass:NSString.class]) {
-        return kTCMappingClassTypeNSString;
+        return kTCMappingTypeNSString;
     } else if ([typeClass isSubclassOfClass:NSNumber.class]) {
-        return kTCMappingClassTypeNSNumber;
+        return kTCMappingTypeNSNumber;
     } else if ([typeClass isSubclassOfClass:NSDictionary.class]) {
-        return kTCMappingClassTypeNSDictionary;
+        return kTCMappingTypeNSDictionary;
     } else if ([typeClass isSubclassOfClass:NSArray.class]) {
-        return kTCMappingClassTypeNSArray;
+        return kTCMappingTypeNSArray;
     } else if ([typeClass isSubclassOfClass:NSURL.class]) {
-        return kTCMappingClassTypeNSURL;
+        return kTCMappingTypeNSURL;
     } else if ([typeClass isSubclassOfClass:NSDate.class]) {
-        return kTCMappingClassTypeNSDate;
+        return kTCMappingTypeNSDate;
     } else if ([typeClass isSubclassOfClass:NSValue.class]) {
-        return kTCMappingClassTypeNSValue;
+        return kTCMappingTypeNSValue;
     } else if ([typeClass isSubclassOfClass:NSSet.class]) {
-        return kTCMappingClassTypeNSSet;
+        return kTCMappingTypeNSSet;
     } else if ([typeClass isSubclassOfClass:NSHashTable.class]) {
-        return kTCMappingClassTypeNSHashTable;
+        return kTCMappingTypeNSHashTable;
     } else if ([typeClass isSubclassOfClass:NSData.class]) {
-        return kTCMappingClassTypeNSData;
+        return kTCMappingTypeNSData;
     } else if ([typeClass isSubclassOfClass:NSNull.class]) {
-        return kTCMappingClassTypeNSNull;
+        return kTCMappingTypeNSNull;
+    } else if ([typeClass isSubclassOfClass:NSAttributedString.class]) {
+        return kTCMappingTypeNSAttributedString;
     }
     
-    return kTCMappingClassTypeUnknown;
+    return kTCMappingTypeUnknown;
 }
 
 NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
 {
     static NSString *kMappingIgnorePtl;
+    static NSString *kJSONIgnorePtl;
     static NSString *kNSCodingIgnorePtl;
     static NSString *kNSCopyingIgnorePtl;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         kMappingIgnorePtl = NSStringFromProtocol(@protocol(TCMappingIgnore));
+        kJSONIgnorePtl = NSStringFromProtocol(@protocol(TCJSONMappingIgnore));
         kNSCodingIgnorePtl = NSStringFromProtocol(@protocol(NSCodingIgnore));
         kNSCopyingIgnorePtl = NSStringFromProtocol(@protocol(NSCopyingIgnore));
     });
@@ -137,12 +146,13 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     
     BOOL isObj = NO;
     BOOL ignoreMapping = NO;
+    BOOL ignoreJSON = NO;
     BOOL ignoreNSCoding = NO;
     BOOL ignoreCopying = NO;
     SEL getter = NULL;
     SEL setter = NULL;
     NSString *typeName = nil;
-    TCMappingClassType classType = kTCMappingClassTypeUnknown;
+    TCMappingType classType = kTCMappingTypeUnknown;
     __unsafe_unretained Class typeClass = Nil;
     
     for (unsigned int i = 0; i < attrCount; ++i) {
@@ -155,10 +165,10 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                     
                     if (len == 1) {
                         typeName = @"id";
-                        classType = kTCMappingClassTypeId;
+                        classType = kTCMappingTypeId;
                     } else if (len == 2 && value[1] == '?') {
                         typeName = @"?";
-                        classType = kTCMappingClassTypeBlock;
+                        classType = kTCMappingTypeBlock;
                     } else {
                         char mutableValue[len - 2];
                         strcpy(mutableValue, value + 2);
@@ -173,6 +183,9 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                                 if ([ignoreProtocol rangeOfString:kMappingIgnorePtl].location != NSNotFound) {
                                     ignoreMapping = YES;
                                 }
+                                if ([ignoreProtocol rangeOfString:kJSONIgnorePtl].location != NSNotFound) {
+                                    ignoreJSON = YES;
+                                }
                                 if ([ignoreProtocol rangeOfString:kNSCodingIgnorePtl].location != NSNotFound) {
                                     ignoreNSCoding = YES;
                                 }
@@ -184,12 +197,12 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                                     typeName = [typeName substringToIndex:range.location];
                                 } else {
                                     typeName = @"id";
-                                    classType = kTCMappingClassTypeId;
+                                    classType = kTCMappingTypeId;
                                 }
                             }
                         }
                         
-                        if (kTCMappingClassTypeId != classType) {
+                        if (kTCMappingTypeId != classType) {
                             typeClass = NSClassFromString(typeName);
                         }
                     }
@@ -199,23 +212,23 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                         typeName = @(value);
                         switch (value[0]) {
                             case '{':
-                                classType = classTypeForStructType(value);
+                                classType = typeForStructType(value);
                                 break;
                                 
                             case '(':
-                                classType = kTCMappingClassTypeUnion;
+                                classType = kTCMappingTypeUnion;
                                 break;
                                 
                             case '[':
-                                classType = kTCMappingClassTypeCArray;
+                                classType = kTCMappingTypeCArray;
                                 break;
                                 
                             case '^':
-                                classType = kTCMappingClassTypeCPointer;
+                                classType = kTCMappingTypeCPointer;
                                 break;
                                 
                             default:
-                                classType = classTypeForScalarType(value);
+                                classType = typeForScalarType(value);
                                 break;
                         }
                     }
@@ -247,7 +260,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         free(attrs), attrs = NULL;
     }
     
-    if (isObj && classType != kTCMappingClassTypeId && Nil == typeClass) {
+    if (isObj && classType != kTCMappingTypeId && Nil == typeClass) {
         return nil;
     }
     
@@ -265,6 +278,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     meta->_ignoreCopying = ignoreCopying;
     meta->_ignoreMapping = ignoreMapping;
     meta->_ignoreNSCoding = ignoreNSCoding;
+    meta->_ignoreJSONMapping = ignoreJSON;
     
     if (NULL == getter) {
         getter = NSSelectorFromString(propertyName);
@@ -280,8 +294,8 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         meta->_setter = setter;
     }
     
-    if (kTCMappingClassTypeUnknown == meta->_classType && Nil != typeClass) {
-        meta->_classType = classTypeForNSType(typeClass);
+    if (kTCMappingTypeUnknown == meta->_classType && Nil != typeClass) {
+        meta->_classType = typeForNSType(typeClass);
     }
     
     return meta;
@@ -337,7 +351,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 + (BOOL)isNSTypeForClass:(Class)klass
 {
-    return classTypeForNSType(klass) != kTCMappingClassTypeUnknown;
+    return typeForNSType(klass) != kTCMappingTypeUnknown;
 }
 
 @end

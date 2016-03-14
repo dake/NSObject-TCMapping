@@ -12,6 +12,7 @@
 #import "FastEasyMapping.h"
 #import "MJExtension.h"
 #import "NSObject+TCMapping.h"
+#import "NSObject+TCJSONMapping.h"
 
 // https://api.github.com/users/facebook
 

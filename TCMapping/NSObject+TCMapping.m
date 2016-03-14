@@ -8,6 +8,8 @@
 
 #import "NSObject+TCMapping.h"
 #import <objc/runtime.h>
+#import <objc/message.h>
+
 #import <CoreGraphics/CGGeometry.h>
 #import <UIKit/UIGeometry.h>
 
@@ -60,6 +62,23 @@ NS_INLINE Class classForType(id type)
     }
     
     return Nil;
+}
+
+NS_INLINE NSValue *valueFromBase64String(NSString *value, const char *type)
+{
+    NSValue *ret = nil;
+    NSData *data = [[NSData alloc] initWithBase64EncodedString:value options:0];
+    if (nil != data) {
+        @try { // FIXME: @encode parser to dictionary
+            ret = [NSValue valueWithBytes:data.bytes objCType:type];
+        }
+        @catch (NSException *exception) {
+            ret = nil;
+        }
+        @finally {
+            return ret;
+        }
+    }
 }
 
 NS_INLINE NSDictionary<NSString *, NSString *> *nameMappingDicFor(NSDictionary *inputMappingDic, NSArray<NSString *> *sysWritableProperties)
@@ -126,10 +145,7 @@ NS_INLINE id mappingNSValueWithString(NSString *value, __unsafe_unretained TCMap
             break;
             
         case kTCMappingTypeStructUnkown: {
-            NSData *data = [[NSData alloc] initWithBase64EncodedString:value options:0];
-            if (nil != data) {
-                ret = [NSValue valueWithBytes:data.bytes objCType:meta->_typeName.UTF8String];
-            }
+            ret = valueFromBase64String(value, meta->_typeName.UTF8String);
             break;
         }
             
@@ -150,28 +166,40 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
         
         switch (meta->_classType) {
             case kTCMappingTypeNSString: { // NSString <- non NSString
-                BOOL isStringValue = [value isKindOfClass:NSString.class];
-                NSCAssert(isStringValue, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass([value class]));
-                if (!isStringValue) {
+                NSCAssert([value isKindOfClass:NSString.class], @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                if (![value isKindOfClass:NSString.class]) {
                     ret = [klass stringWithFormat:@"%@", value];
                 } else {
-                    if (klass != [value class]) {
-                        ret = [klass stringWithString:value];
-                    } else {
+                    if ([value isKindOfClass:klass]) {
                         ret = value;
+                    } else {
+                        ret = [klass stringWithString:value];
                     }
                 }
             
                 break;
             }
                 
+            case kTCMappingTypeNSDecimalNumber:
             case kTCMappingTypeNSNumber: { // NSNumber <- NSString
                 if ([value isKindOfClass:NSNumber.class]) {
-                    ret = value;
+                    if (meta->_classType == kTCMappingTypeNSDecimalNumber) {
+                        if ([value isKindOfClass:klass]) {
+                            ret = value;
+                        } else {
+                            ret = [klass decimalNumberWithDecimal:[((NSNumber *)value) decimalValue]];
+                        }
+                    } else if ([value isKindOfClass:klass]) {
+                        ret = value;
+                    }
                 } else {
-                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass([value class]));
+                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
                     if ([value isKindOfClass:NSString.class]) {
-                        ret = [tc_mapping_number_fmter() numberFromString:(NSString *)value];
+                        if (meta->_classType == kTCMappingTypeNSNumber) {
+                            ret = [tc_mapping_number_fmter() numberFromString:(NSString *)value];
+                        } else {
+                            ret = [NSDecimalNumber decimalNumberWithString:value];
+                        }
                     }
                 }
                 
@@ -191,9 +219,9 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     BOOL ignore = NO;
                     NSTimeInterval timestamp = [curClass tc_timestampToSecondSince1970:((NSNumber *)value).doubleValue ignoreReturn:&ignore];
                     if (!ignore) {
-                        ret = [NSDate dateWithTimeIntervalSince1970:timestamp];
+                        ret = [klass dateWithTimeIntervalSince1970:timestamp];
                     }
-                } else if ([value isKindOfClass:NSDate.class]) {
+                } else if ([value isKindOfClass:klass]) {
                     ret = value;
                 }
                 
@@ -203,7 +231,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
             case kTCMappingTypeNSURL: { // NSURL <- NSString
                 if ([value isKindOfClass:NSString.class]) {
                     ret = [klass URLWithString:value];
-                } else if ([ret isKindOfClass:NSURL.class]) {
+                } else if ([value isKindOfClass:NSURL.class]) {
                     ret = value;
                 }
                 
@@ -214,10 +242,10 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 if ([value isKindOfClass:NSString.class]) {
                     ret = [[klass alloc] initWithBase64EncodedString:value options:0];
                 } else if ([value isKindOfClass:NSData.class]) {
-                    if (klass != [value class]) {
-                        ret = [klass dataWithData:value];
-                    } else {
+                    if ([value isKindOfClass:klass]) {
                         ret = value;
+                    } else {
+                        ret = [klass dataWithData:value];
                     }
                 }
                 
@@ -225,12 +253,13 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
             }
                 
             case kTCMappingTypeNSValue: {
-                if ([value isMemberOfClass:klass]) {
+                if ([value isKindOfClass:klass]) {
                     ret = value;
-                } else {
-                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass([value class]));
+                } else if ([value isKindOfClass:NSString.class]) {
+                    ret = valueFromBase64String(value, meta->_typeName.UTF8String);
                 }
                 
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
                 break;
             }
                 
@@ -239,9 +268,29 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     ret = value;
                 } else if ([value isKindOfClass:NSString.class]) {
                     ret = [[klass alloc] initWithString:value];
-                } else {
-                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, NSStringFromClass(klass), NSStringFromClass([value class]));
                 }
+                
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                break;
+            }
+                
+            case kTCMappingTypeClass: {
+                if (class_isMetaClass(object_getClass(value))) {
+                    ret = value;
+                } else if ([value isKindOfClass:NSString.class]) {
+                    ret = NSClassFromString(value);
+                }
+                
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                break;
+            }
+                
+            case kTCMappingTypeBlock: {
+                if ([value isKindOfClass:meta->_typeClass]) {
+                    ret = value;
+                }
+                
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
                 break;
             }
                 
@@ -249,22 +298,27 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 ret = value;
                 break;
         }
-    } else if ([meta->_typeName hasPrefix:@"{"]) { // NSValue <- NSString
+    } else if (meta->_classType == kTCMappingTypeSEL) {
         if ([value isKindOfClass:NSString.class]) {
-            ret = mappingNSValueWithString(value ,meta);
-        } else if ([value isKindOfClass:NSValue.class] && strcmp(((NSValue *)value).objCType, meta->_typeName.UTF8String) == 0) {
             ret = value;
-        } else {
-            NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
         }
         
-    } else if (meta->_classType == kTCMappingTypeUnion) {
+        NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+        
+    } else if (meta->_isStruct || meta->_classType == kTCMappingTypeCArray || meta->_classType == kTCMappingTypeUnion) { // NSValue <- NSString
+        NSValue *tmpValue = nil;
         if ([value isKindOfClass:NSString.class]) {
-            NSData *data = [[NSData alloc] initWithBase64EncodedString:value options:0];
-            if (nil != data) {
-                ret = [NSValue valueWithBytes:data.bytes objCType:meta->_typeName.UTF8String];
-            }
+            tmpValue = mappingNSValueWithString(value ,meta);
+        } else if ([value isKindOfClass:NSValue.class]) {
+            tmpValue = value;
         }
+        
+        if (nil != tmpValue && strcmp(tmpValue.objCType, meta->_typeName.UTF8String) == 0) {
+            ret = tmpValue;
+        }
+        
+        NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+
     } else {
         ret = value;
     }
@@ -502,7 +556,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             continue;
         }
         
-        TCMappingMeta *meta = metaDic[propertyName];
+        __unsafe_unretained TCMappingMeta *meta = metaDic[propertyName];
         if (meta->_ignoreMapping || NULL == meta->_setter) {
             continue;
         }
@@ -519,7 +573,6 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
         if ([value isKindOfClass:NSDictionary.class]) {
             __unsafe_unretained NSDictionary *valueDataDic = (NSDictionary *)value;
             if (valueDataDic.count > 0) {
-                __unsafe_unretained TCMappingMeta *meta = metaDic[propertyName];
                 __unsafe_unretained Class klass = meta->_typeClass;
                 if (Nil == klass) {
                     value = nil;
@@ -546,10 +599,10 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             } else {
                 value = nil;
             }
-        } else if ([value isKindOfClass:NSArray.class]) {
-            __unsafe_unretained NSArray *valueDataArry = (NSArray *)value;
+        } else if ([value isKindOfClass:NSArray.class] || [value isKindOfClass:NSSet.class]) {
+            
+            NSArray *valueDataArry = [value isKindOfClass:NSArray.class] ? (NSArray *)value : ((NSSet *)value).allObjects;
             if (valueDataArry.count > 0) {
-                __unsafe_unretained TCMappingMeta *meta = metaDic[propertyName];
                 if (Nil == meta->_typeClass || (meta->_classType != kTCMappingTypeNSArray && meta->_classType != kTCMappingTypeNSSet)) {
                     value = nil;
                 } else {
@@ -570,7 +623,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                 }
             }
         } else if (value != (id)kCFNull) {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, metaDic[propertyName], typeDic, curClass);
+            value = valueForBaseTypeOfPropertyName(propertyName, value, meta, typeDic, curClass);
         }
         
         if (nil == value) {
@@ -587,7 +640,14 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             }
         }
         
-        [obj setValue:value forKey:propertyName];
+        if (meta->_classType != kTCMappingTypeSEL) {
+            [obj setValue:value forKey:propertyName];
+        } else {
+            SEL sel = NSSelectorFromString((NSString *)value);
+            if (NULL != sel) {
+                ((void (*)(id, SEL, SEL))(void *) objc_msgSend)(obj, meta->_setter, sel);
+            }
+        }
     }
     
     return obj.tc_mappingValidate ? obj : nil;

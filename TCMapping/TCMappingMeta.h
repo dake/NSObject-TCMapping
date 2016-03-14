@@ -16,6 +16,7 @@ typedef NS_ENUM (NSUInteger, TCMappingType) {
     kTCMappingTypeNSString,
     kTCMappingTypeNSValue,
     kTCMappingTypeNSNumber,
+    kTCMappingTypeNSDecimalNumber,
     kTCMappingTypeNSDate,
     kTCMappingTypeNSURL,
     kTCMappingTypeNSArray,
@@ -85,6 +86,7 @@ typedef NS_ENUM (NSUInteger, TCMappingType) {
     BOOL _ignoreJSONMapping;
     BOOL _ignoreNSCoding;
     BOOL _ignoreCopying;
+    BOOL _isStruct;
 }
 
 + (BOOL)isNSTypeForClass:(Class)klass;

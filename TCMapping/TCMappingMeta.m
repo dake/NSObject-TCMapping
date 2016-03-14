@@ -26,7 +26,19 @@
 
 
 
-
+NS_INLINE Class NSBlockClass(void)
+{
+    static Class cls;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void (^block)(void) = ^{};
+        cls = [block class];
+        while (class_getSuperclass(cls) != [NSObject class]) {
+            cls = class_getSuperclass(cls);
+        }
+    });
+    return cls;
+}
 
 NS_INLINE TCMappingType typeForStructType(const char *type)
 {
@@ -73,8 +85,6 @@ NS_INLINE TCMappingType typeForScalarType(const char *typeStr)
         return kTCMappingTypeDouble;
     } else if (type == @encode(long double)[0]) {
         return kTCMappingTypeLongDouble;
-    } else if (type == @encode(Class)[0]) {
-        return kTCMappingTypeClass;
     } else if (type == @encode(char *)[0] || strcmp(typeStr, @encode(const char *)) == 0) {
         return kTCMappingTypeCString;
     } else if (type == @encode(int8_t)[0]) {
@@ -85,8 +95,6 @@ NS_INLINE TCMappingType typeForScalarType(const char *typeStr)
         return kTCMappingTypeInt16;
     } else if (type == @encode(uint16_t)[0]) {
         return kTCMappingTypeUInt16;
-    } else if (type == @encode(SEL)[0]) {
-        return kTCMappingTypeSEL;
     } else if (type == @encode(void)[0]) {
         return kTCMappingTypeVoid;
     } else {
@@ -99,6 +107,9 @@ NS_INLINE TCMappingType typeForNSType(Class typeClass)
     if ([typeClass isSubclassOfClass:NSString.class]) {
         return kTCMappingTypeNSString;
     } else if ([typeClass isSubclassOfClass:NSNumber.class]) {
+        if ([typeClass isSubclassOfClass:NSDecimalNumber.class]) {
+            return kTCMappingTypeNSDecimalNumber;
+        }
         return kTCMappingTypeNSNumber;
     } else if ([typeClass isSubclassOfClass:NSDictionary.class]) {
         return kTCMappingTypeNSDictionary;
@@ -145,6 +156,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     objc_property_attribute_t *attrs = property_copyAttributeList(property, &attrCount);
     
     BOOL isObj = NO;
+    BOOL isStruct = NO;
     BOOL ignoreMapping = NO;
     BOOL ignoreJSON = NO;
     BOOL ignoreNSCoding = NO;
@@ -167,7 +179,8 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                         typeName = @"id";
                         classType = kTCMappingTypeId;
                     } else if (len == 2 && value[1] == '?') {
-                        typeName = @"?";
+                        typeClass = NSBlockClass();
+                        typeName = NSStringFromClass(typeClass);
                         classType = kTCMappingTypeBlock;
                     } else {
                         char mutableValue[len - 2];
@@ -202,7 +215,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                             }
                         }
                         
-                        if (kTCMappingTypeId != classType) {
+                        if (kTCMappingTypeId != classType && kTCMappingTypeBlock != classType) {
                             typeClass = NSClassFromString(typeName);
                         }
                     }
@@ -211,21 +224,34 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                     if (len > 0) {
                         typeName = @(value);
                         switch (value[0]) {
+                            case '#':
+                                isObj = YES;
+                                typeName = @"Class";
+                                classType = kTCMappingTypeClass;
+                                break;
+                                
                             case '{':
+                                isStruct = YES;
                                 classType = typeForStructType(value);
                                 break;
                                 
-                            case '(':
-                                classType = kTCMappingTypeUnion;
+                            case '^':
+                                classType = kTCMappingTypeCPointer;
+                                break;
+                                
+                                case ':':
+                                typeName = @"SEL";
+                                classType = kTCMappingTypeSEL;
                                 break;
                                 
                             case '[':
                                 classType = kTCMappingTypeCArray;
                                 break;
                                 
-                            case '^':
-                                classType = kTCMappingTypeCPointer;
+                            case '(':
+                                classType = kTCMappingTypeUnion;
                                 break;
+
                                 
                             default:
                                 classType = typeForScalarType(value);
@@ -260,7 +286,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         free(attrs), attrs = NULL;
     }
     
-    if (isObj && classType != kTCMappingTypeId && Nil == typeClass) {
+    if (isObj && classType != kTCMappingTypeId && classType != kTCMappingTypeBlock && Nil == typeClass) {
         return nil;
     }
     
@@ -275,6 +301,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     meta->_isObj = isObj;
     meta->_typeClass = typeClass;
     meta->_classType = classType;
+    meta->_isStruct = isStruct;
     meta->_ignoreCopying = ignoreCopying;
     meta->_ignoreMapping = ignoreMapping;
     meta->_ignoreNSCoding = ignoreNSCoding;

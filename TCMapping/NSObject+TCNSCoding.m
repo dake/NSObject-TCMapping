@@ -39,7 +39,8 @@
         } else if ((id)kCFNull == mapKey) {
             continue;
         }
-        NSObject *value = [self valueForKey:key];
+    
+        NSObject *value = [self valueForKey:key meta:meta];
         NSAssert(nil == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
 
         [coder encodeObject:value forKey:mapKey];
@@ -72,7 +73,8 @@
         } else if ((id)kCFNull == mapKey) {
             continue;
         }
-        [obj setValue:[coder decodeObjectForKey:mapKey] forKey:key];
+        
+        [obj setValue:[coder decodeObjectForKey:mapKey] forKey:key meta:meta];
     }
     
     return obj;
@@ -107,7 +109,7 @@
             continue;
         }
 
-        [copy setValue:[self valueForKey:key] forKey:key];
+        [self copy:copy forKey:key meta:meta];
     }
     
     return copy;
@@ -134,8 +136,7 @@
         if (NULL == meta->_getter) {
             continue;
         }
-        
-        value ^= [[self valueForKey:NSStringFromSelector(meta->_getter)] hash];
+        value ^= [[self valueForKey:NSStringFromSelector(meta->_getter) meta:meta] hash];
     }
     
     if (0 == value) {
@@ -165,8 +166,8 @@
         }
         
         NSString *getter = NSStringFromSelector(meta->_getter);
-        id left = [self valueForKey:getter];
-        id right = [object valueForKey:getter];
+        id left = [self valueForKey:getter meta:meta];
+        id right = [object valueForKey:getter meta:meta];
         if (left == right) {
             continue;
         } else if (nil == left || nil == right) {

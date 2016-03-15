@@ -9,67 +9,77 @@
 #import <Foundation/Foundation.h>
 
 
-typedef NS_ENUM (NSUInteger, TCMappingType) {
-    kTCMappingTypeUnknown = 0,
+typedef NS_ENUM (NSUInteger, TCEncodingType) {
+    kTCEncodingTypeUnknown = 0,
     
     // sys type
-    kTCMappingTypeNSString,
-    kTCMappingTypeNSValue,
-    kTCMappingTypeNSNumber,
-    kTCMappingTypeNSDecimalNumber,
-    kTCMappingTypeNSDate,
-    kTCMappingTypeNSURL,
-    kTCMappingTypeNSArray,
-    kTCMappingTypeNSDictionary,
-    kTCMappingTypeNSSet,
-    kTCMappingTypeNSHashTable,
-    kTCMappingTypeNSData,
-    kTCMappingTypeNSNull,
-    kTCMappingTypeNSAttributedString,
+    kTCEncodingTypeNSString,
+    kTCEncodingTypeNSValue,
+    kTCEncodingTypeNSNumber,
+    kTCEncodingTypeNSDecimalNumber,
+    kTCEncodingTypeNSDate,
+    kTCEncodingTypeNSURL,
+    kTCEncodingTypeNSArray,
+    kTCEncodingTypeNSDictionary,
+    kTCEncodingTypeNSSet,
+    kTCEncodingTypeNSHashTable,
+    kTCEncodingTypeNSData,
+    kTCEncodingTypeNSNull,
+    kTCEncodingTypeNSAttributedString,
     
     // id type
-    kTCMappingTypeId,
-    kTCMappingTypeBlock,
-    kTCMappingTypeClass,
-    kTCMappingTypeVoid,
-    
+    kTCEncodingTypeId,
+    kTCEncodingTypeBlock,
+    kTCEncodingTypeClass,
+
     // int, double, etc...
-    kTCMappingTypeBool,
-    kTCMappingTypeInt64,
-    kTCMappingTypeUInt64,
-    kTCMappingTypeInt32,
-    kTCMappingTypeUInt32,
-    kTCMappingTypeInt16,
-    kTCMappingTypeUInt16,
-    kTCMappingTypeInt8,
-    kTCMappingTypeUInt8,
+    kTCEncodingTypeBool,
+    kTCEncodingTypeInt64,
+    kTCEncodingTypeUInt64,
+    kTCEncodingTypeInt32,
+    kTCEncodingTypeUInt32,
+    kTCEncodingTypeInt16,
+    kTCEncodingTypeUInt16,
+    kTCEncodingTypeInt8,
+    kTCEncodingTypeUInt8,
     
-    kTCMappingTypeFloat,
-    kTCMappingTypeDouble,
-    kTCMappingTypeLongDouble,
+    kTCEncodingTypeFloat,
+    kTCEncodingTypeDouble,
+    kTCEncodingTypeLongDouble,
     
-    kTCMappingTypeCPointer,
-    kTCMappingTypeCString, // char * or char const *
-    kTCMappingTypeCArray,
-    kTCMappingTypeUnion,
-    kTCMappingTypeSEL,
+    kTCEncodingTypeVoid,
+    kTCEncodingTypeCPointer,
+    kTCEncodingTypeCString, // char * or char const *, TODO: immutale
+    kTCEncodingTypeCArray,
+    kTCEncodingTypeUnion,
+    kTCEncodingTypeSEL,
     
-    kTCMappingTypeBaseScalarUnkown,
+    kTCEncodingTypePrimitiveUnkown,
     
     // struct
-    kTCMappingTypeCGPoint,
-    kTCMappingTypeCGVector,
-    kTCMappingTypeCGSize,
-    kTCMappingTypeCGRect,
-    kTCMappingTypeCGAffineTransform,
-    kTCMappingTypeUIEdgeInsets,
-    kTCMappingTypeUIOffset,
-    kTCMappingTypeNSRange,
-    kTCMappingTypeUIRectEdge,
+    kTCEncodingTypeCGPoint,
+    kTCEncodingTypeCGVector,
+    kTCEncodingTypeCGSize,
+    kTCEncodingTypeCGRect,
+    kTCEncodingTypeCGAffineTransform,
+    kTCEncodingTypeUIEdgeInsets,
+    kTCEncodingTypeUIOffset,
+    kTCEncodingTypeNSRange,
+    kTCEncodingTypeUIRectEdge,
     
-    kTCMappingTypeStructUnkown,
+    kTCEncodingTypeBitStruct, // bit field struct
+    kTCEncodingTypeCustomStruct,
 };
 
+NS_INLINE BOOL isTypeNeedSerialization(TCEncodingType type)
+{
+    return type == kTCEncodingTypeCPointer ||
+    type == kTCEncodingTypeCArray ||
+    type == kTCEncodingTypeBitStruct ||
+    type == kTCEncodingTypeUnion;
+}
+
+NS_ASSUME_NONNULL_BEGIN
 
 @interface TCMappingMeta : NSObject
 {
@@ -78,7 +88,7 @@ typedef NS_ENUM (NSUInteger, TCMappingType) {
     NSString *_typeName;
     NSString *_propertyName;
     Class _typeClass;
-    TCMappingType _classType;
+    TCEncodingType _encodingType;
     
     SEL _getter;
     SEL _setter;
@@ -94,3 +104,44 @@ typedef NS_ENUM (NSUInteger, TCMappingType) {
 @end
 
 extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class klass);
+
+
+@protocol TCNSValueSerializer <NSObject>
+
+@optional
+- (NSData *)tc_dataForKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (void)tc_setData:(nullable NSData *)data forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+
+@end
+
+
+@interface NSObject (TCMappingMeta) <TCNSValueSerializer>
+
+/**
+ @brief	kvc expand
+
+ http://stackoverflow.com/questions/18542664/assigning-to-a-property-of-type-sel-using-kvc
+ kvc unsupport: c pointer (include char *, char const *), bit struct, union, SEL
+ 
+ NSValue unsupport: bit struct,
+ */
+
+
+
+- (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (void)copy:(id)copy forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+
+@end
+
+
+@interface NSValue (TCNSValueSerializer)
+
+- (nullable NSData *)unsafeDataForCustomStruct;
++ (nullable instancetype)valueWitUnsafeData:(NSData *)data customStructType:(const char *)type;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+

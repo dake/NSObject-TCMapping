@@ -8,6 +8,7 @@
 
 #import "NSObject+TCJSONMapping.h"
 #import <objc/runtime.h>
+
 #import <CoreGraphics/CGGeometry.h>
 #import <UIKit/UIGeometry.h>
 #import "TCMappingMeta.h"
@@ -53,23 +54,6 @@ NS_INLINE NSString *mappingForNSValue(NSValue *value)
         return NSStringFromRange(value.rangeValue);
     } else if (strcmp(type, @encode(CGVector)) == 0) {
         return NSStringFromCGVector(value.CGVectorValue);
-    } else {
-        // http://stackoverflow.com/questions/18485002/why-cant-i-encode-an-nsvalue-in-an-nskeyedarchiver
-        // https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/Archiving/Articles/codingctypes.html#//apple_ref/doc/uid/20001294-BBCBDHBI
-        
-        // FIXME: @encode parser to dictionary, compatible with hardware
-        NSUInteger size = 0;
-        NSUInteger align = 0;
-        NSGetSizeAndAlignment(type, &size, &align);
-        
-        if (size > 0) {
-            void *ptr = malloc(size);
-            if (NULL != ptr) {
-                [value getValue:ptr];
-                NSData *data = [NSData dataWithBytesNoCopy:ptr length:size];
-                return [data base64EncodedStringWithOptions:0];
-            }
-        }
     }
     
     return nil;
@@ -146,7 +130,12 @@ static id mappingToJSONObject(id obj)
             if (NULL == meta->_getter || meta->_ignoreJSONMapping || nameDic[key] == (id)kCFNull) {
                 continue;
             }
-            id value = mappingToJSONObject([obj valueForKey:NSStringFromSelector(meta->_getter)]);
+            
+            id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta];
+            if (nil != value) {
+                value = mappingToJSONObject(value);
+            }
+            
             if (nil != value) {
                 dic[nameDic[key] ?: key] = value;
             }

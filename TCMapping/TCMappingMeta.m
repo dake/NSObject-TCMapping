@@ -8,6 +8,8 @@
 
 #import "TCMappingMeta.h"
 #import <objc/runtime.h>
+#import <objc/message.h>
+
 #import <CoreGraphics/CGGeometry.h>
 #import <UIKit/UIGeometry.h>
 
@@ -40,100 +42,102 @@ NS_INLINE Class NSBlockClass(void)
     return cls;
 }
 
-NS_INLINE TCMappingType typeForStructType(const char *type)
+NS_INLINE TCEncodingType typeForStructType(const char *type)
 {
     if (strcmp(type, @encode(CGPoint)) == 0) {
-        return kTCMappingTypeCGPoint;
+        return kTCEncodingTypeCGPoint;
     } else if (strcmp(type, @encode(CGSize)) == 0) {
-        return kTCMappingTypeCGSize;
+        return kTCEncodingTypeCGSize;
     } else if (strcmp(type, @encode(CGRect)) == 0) {
-        return kTCMappingTypeCGRect;
+        return kTCEncodingTypeCGRect;
     } else if (strcmp(type, @encode(UIEdgeInsets)) == 0) {
-        return kTCMappingTypeUIEdgeInsets;
+        return kTCEncodingTypeUIEdgeInsets;
     } else if (strcmp(type, @encode(CGAffineTransform)) == 0) {
-        return kTCMappingTypeCGAffineTransform;
+        return kTCEncodingTypeCGAffineTransform;
     } else if (strcmp(type, @encode(UIOffset)) == 0) {
-        return kTCMappingTypeUIOffset;
+        return kTCEncodingTypeUIOffset;
     } else if (strcmp(type, @encode(NSRange)) == 0) {
-        return kTCMappingTypeNSRange;
+        return kTCEncodingTypeNSRange;
     } else if (strcmp(type, @encode(CGVector)) == 0) {
-        return kTCMappingTypeCGVector;
+        return kTCEncodingTypeCGVector;
     } else if (strcmp(type, @encode(UIRectEdge)) == 0) {
-        return kTCMappingTypeUIRectEdge;
-    }  else {
-        return kTCMappingTypeStructUnkown;
+        return kTCEncodingTypeUIRectEdge;
+    } else if (NULL != strstr(type, "b")) {
+        return kTCEncodingTypeBitStruct;
+    } else {
+        return kTCEncodingTypeCustomStruct;
     }
 }
 
-NS_INLINE TCMappingType typeForScalarType(const char *typeStr)
+NS_INLINE TCEncodingType typeForScalarType(const char *typeStr)
 {
     char type = typeStr[0];
     
     if (type == @encode(BOOL)[0]) {
-        return kTCMappingTypeBool;
+        return kTCEncodingTypeBool;
     } else if (type == @encode(int64_t)[0]) {
-        return kTCMappingTypeInt64;
+        return kTCEncodingTypeInt64;
     } else if (type == @encode(uint64_t)[0]) {
-        return kTCMappingTypeUInt64;
+        return kTCEncodingTypeUInt64;
     } else if (type == @encode(int32_t)[0] || type == @encode(long)[0]) {
-        return kTCMappingTypeInt32;
+        return kTCEncodingTypeInt32;
     } else if (type == @encode(uint32_t)[0] || type == @encode(unsigned long)[0]) {
-        return kTCMappingTypeUInt32;
+        return kTCEncodingTypeUInt32;
     } else if (type == @encode(float)[0]) {
-        return kTCMappingTypeFloat;
+        return kTCEncodingTypeFloat;
     } else if (type == @encode(double)[0]) {
-        return kTCMappingTypeDouble;
+        return kTCEncodingTypeDouble;
     } else if (type == @encode(long double)[0]) {
-        return kTCMappingTypeLongDouble;
+        return kTCEncodingTypeLongDouble;
     } else if (type == @encode(char *)[0] || strcmp(typeStr, @encode(const char *)) == 0) {
-        return kTCMappingTypeCString;
+        return kTCEncodingTypeCString;
     } else if (type == @encode(int8_t)[0]) {
-        return kTCMappingTypeInt8;
+        return kTCEncodingTypeInt8;
     } else if (type == @encode(uint8_t)[0]) {
-        return kTCMappingTypeUInt8;
+        return kTCEncodingTypeUInt8;
     } else if (type == @encode(int16_t)[0]) {
-        return kTCMappingTypeInt16;
+        return kTCEncodingTypeInt16;
     } else if (type == @encode(uint16_t)[0]) {
-        return kTCMappingTypeUInt16;
+        return kTCEncodingTypeUInt16;
     } else if (type == @encode(void)[0]) {
-        return kTCMappingTypeVoid;
+        return kTCEncodingTypeVoid;
     } else {
-        return kTCMappingTypeBaseScalarUnkown;
+        return kTCEncodingTypePrimitiveUnkown;
     }
 }
 
-NS_INLINE TCMappingType typeForNSType(Class typeClass)
+NS_INLINE TCEncodingType typeForNSType(Class typeClass)
 {
     if ([typeClass isSubclassOfClass:NSString.class]) {
-        return kTCMappingTypeNSString;
+        return kTCEncodingTypeNSString;
     } else if ([typeClass isSubclassOfClass:NSNumber.class]) {
         if ([typeClass isSubclassOfClass:NSDecimalNumber.class]) {
-            return kTCMappingTypeNSDecimalNumber;
+            return kTCEncodingTypeNSDecimalNumber;
         }
-        return kTCMappingTypeNSNumber;
+        return kTCEncodingTypeNSNumber;
     } else if ([typeClass isSubclassOfClass:NSDictionary.class]) {
-        return kTCMappingTypeNSDictionary;
+        return kTCEncodingTypeNSDictionary;
     } else if ([typeClass isSubclassOfClass:NSArray.class]) {
-        return kTCMappingTypeNSArray;
+        return kTCEncodingTypeNSArray;
     } else if ([typeClass isSubclassOfClass:NSURL.class]) {
-        return kTCMappingTypeNSURL;
+        return kTCEncodingTypeNSURL;
     } else if ([typeClass isSubclassOfClass:NSDate.class]) {
-        return kTCMappingTypeNSDate;
+        return kTCEncodingTypeNSDate;
     } else if ([typeClass isSubclassOfClass:NSValue.class]) {
-        return kTCMappingTypeNSValue;
+        return kTCEncodingTypeNSValue;
     } else if ([typeClass isSubclassOfClass:NSSet.class]) {
-        return kTCMappingTypeNSSet;
+        return kTCEncodingTypeNSSet;
     } else if ([typeClass isSubclassOfClass:NSHashTable.class]) {
-        return kTCMappingTypeNSHashTable;
+        return kTCEncodingTypeNSHashTable;
     } else if ([typeClass isSubclassOfClass:NSData.class]) {
-        return kTCMappingTypeNSData;
+        return kTCEncodingTypeNSData;
     } else if ([typeClass isSubclassOfClass:NSNull.class]) {
-        return kTCMappingTypeNSNull;
+        return kTCEncodingTypeNSNull;
     } else if ([typeClass isSubclassOfClass:NSAttributedString.class]) {
-        return kTCMappingTypeNSAttributedString;
+        return kTCEncodingTypeNSAttributedString;
     }
     
-    return kTCMappingTypeUnknown;
+    return kTCEncodingTypeUnknown;
 }
 
 NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
@@ -164,7 +168,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     SEL getter = NULL;
     SEL setter = NULL;
     NSString *typeName = nil;
-    TCMappingType classType = kTCMappingTypeUnknown;
+    TCEncodingType classType = kTCEncodingTypeUnknown;
     __unsafe_unretained Class typeClass = Nil;
     
     for (unsigned int i = 0; i < attrCount; ++i) {
@@ -177,11 +181,11 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                     
                     if (len == 1) {
                         typeName = @"id";
-                        classType = kTCMappingTypeId;
+                        classType = kTCEncodingTypeId;
                     } else if (len == 2 && value[1] == '?') {
                         typeClass = NSBlockClass();
                         typeName = NSStringFromClass(typeClass);
-                        classType = kTCMappingTypeBlock;
+                        classType = kTCEncodingTypeBlock;
                     } else {
                         char mutableValue[len - 2];
                         strcpy(mutableValue, value + 2);
@@ -210,12 +214,12 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                                     typeName = [typeName substringToIndex:range.location];
                                 } else {
                                     typeName = @"id";
-                                    classType = kTCMappingTypeId;
+                                    classType = kTCEncodingTypeId;
                                 }
                             }
                         }
                         
-                        if (kTCMappingTypeId != classType && kTCMappingTypeBlock != classType) {
+                        if (kTCEncodingTypeId != classType && kTCEncodingTypeBlock != classType) {
                             typeClass = NSClassFromString(typeName);
                         }
                     }
@@ -227,7 +231,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                             case '#':
                                 isObj = YES;
                                 typeName = @"Class";
-                                classType = kTCMappingTypeClass;
+                                classType = kTCEncodingTypeClass;
                                 break;
                                 
                             case '{':
@@ -236,22 +240,22 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                                 break;
                                 
                             case '^':
-                                classType = kTCMappingTypeCPointer;
+                                classType = kTCEncodingTypeCPointer;
                                 break;
                                 
-                                case ':':
+                            case ':':
                                 typeName = @"SEL";
-                                classType = kTCMappingTypeSEL;
+                                classType = kTCEncodingTypeSEL;
                                 break;
                                 
                             case '[':
-                                classType = kTCMappingTypeCArray;
+                                classType = kTCEncodingTypeCArray;
                                 break;
                                 
                             case '(':
-                                classType = kTCMappingTypeUnion;
+                                classType = kTCEncodingTypeUnion;
                                 break;
-
+                                
                                 
                             default:
                                 classType = typeForScalarType(value);
@@ -286,7 +290,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         free(attrs), attrs = NULL;
     }
     
-    if (isObj && classType != kTCMappingTypeId && classType != kTCMappingTypeBlock && Nil == typeClass) {
+    if (isObj && classType != kTCEncodingTypeId && classType != kTCEncodingTypeBlock && Nil == typeClass) {
         return nil;
     }
     
@@ -300,7 +304,7 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
     meta->_typeName = typeName;
     meta->_isObj = isObj;
     meta->_typeClass = typeClass;
-    meta->_classType = classType;
+    meta->_encodingType = classType;
     meta->_isStruct = isStruct;
     meta->_ignoreCopying = ignoreCopying;
     meta->_ignoreMapping = ignoreMapping;
@@ -321,8 +325,8 @@ NS_INLINE TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         meta->_setter = setter;
     }
     
-    if (kTCMappingTypeUnknown == meta->_classType && Nil != typeClass) {
-        meta->_classType = typeForNSType(typeClass);
+    if (kTCEncodingTypeUnknown == meta->_encodingType && Nil != typeClass) {
+        meta->_encodingType = typeForNSType(typeClass);
     }
     
     return meta;
@@ -378,7 +382,154 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 + (BOOL)isNSTypeForClass:(Class)klass
 {
-    return typeForNSType(klass) != kTCMappingTypeUnknown;
+    return typeForNSType(klass) != kTCEncodingTypeUnknown;
+}
+
+@end
+
+
+#pragma mark -
+
+@implementation NSObject (TCMappingMeta)
+
+- (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta
+{
+    // valueForKey unsupport: c pointer (include char *, char const *), bit struct, union, SEL
+    NSParameterAssert(meta);
+    NSParameterAssert(key);
+    
+    
+    TCEncodingType type = meta->_encodingType;
+    
+    if (isTypeNeedSerialization(type)) {
+        if ([self.class instancesRespondToSelector:@selector(tc_dataForKey:meta:)]) {
+            NSData *data = [self tc_dataForKey:key meta:meta];
+            return [data base64EncodedStringWithOptions:0];
+        }
+        return nil;
+    }
+    
+    id value = nil;
+    if (type == kTCEncodingTypeSEL) {
+        SEL selector = ((SEL (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
+        value = NULL != selector ? NSStringFromSelector(selector) : (id)kCFNull;
+        
+    } else if (type == kTCEncodingTypeCString) {
+        char const *cstr = ((char const * (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
+        value = NULL != cstr ? @(cstr) : (id)kCFNull;
+        
+    } else {
+        value = [self valueForKey:NSStringFromSelector(meta->_getter)];
+    }
+    
+    return value;
+}
+
+- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta
+{
+    NSParameterAssert(meta);
+    NSParameterAssert(key);
+    
+    TCEncodingType type = meta->_encodingType;
+    
+    if (type == kTCEncodingTypeCString || isTypeNeedSerialization(type)) {
+        NSData *data = value;
+        if ([value isKindOfClass:NSString.class]) {
+            if (type == kTCEncodingTypeCString) {
+                data = [value dataUsingEncoding:NSUTF8StringEncoding];
+            } else {
+                data = [[NSData alloc] initWithBase64EncodedString:value options:0];
+            }
+        }
+        if (nil == data || (id)kCFNull == data || [data isKindOfClass:NSData.class]) {
+            if ([self.class instancesRespondToSelector:@selector(tc_setData:forKey:meta:)]) {
+                [self tc_setData:data forKey:key meta:meta];
+            }
+        }
+        
+        return;
+    }
+    
+    if (type == kTCEncodingTypeSEL) {
+        if (value == (id)kCFNull) {
+            ((void (*)(id, SEL, SEL))(void *) objc_msgSend)(self, meta->_setter, NULL);
+        } else {
+            SEL sel = NSSelectorFromString((NSString *)value);
+            if (NULL != sel) {
+                ((void (*)(id, SEL, SEL))(void *) objc_msgSend)(self, meta->_setter, sel);
+            }
+        }
+        
+    } else {
+        [self setValue:value forKey:key];
+    }
+}
+
+- (void)copy:(id)copy forKey:(NSString *)key meta:(TCMappingMeta *)meta
+{
+    NSParameterAssert(meta);
+    NSParameterAssert(key);
+    
+    TCEncodingType type = meta->_encodingType;
+    
+    if (type == kTCEncodingTypeCPointer ||
+        type == kTCEncodingTypeCArray ||
+        type == kTCEncodingTypeCString ||
+        type == kTCEncodingTypeSEL) {
+        size_t value = ((size_t (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
+        ((void (*)(id, SEL, size_t))(void *) objc_msgSend)(copy, meta->_setter, value);
+        
+    } else if (type != kTCEncodingTypeUnion && type != kTCEncodingTypeBitStruct) {
+        [copy setValue:[self valueForKey:key meta:meta] forKey:key meta:meta];
+    }
+}
+
+@end
+
+
+@implementation NSValue (TCNSValueSerializer)
+
+- (NSData *)unsafeDataForCustomStruct
+{
+    // http://stackoverflow.com/questions/18485002/why-cant-i-encode-an-nsvalue-in-an-nskeyedarchiver
+    // https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/Archiving/Articles/codingctypes.html#//apple_ref/doc/uid/20001294-BBCBDHBI
+    
+    NSUInteger size = 0;
+    NSUInteger align = 0;
+    NSGetSizeAndAlignment(self.objCType, &size, &align);
+    
+    if (size > 0) {
+        void *ptr = malloc(size);
+        if (NULL != ptr) {
+            [self getValue:ptr];
+            return [NSData dataWithBytesNoCopy:ptr length:size];
+        }
+    }
+    
+    return nil;
+}
+
++ (instancetype)valueWitUnsafeData:(NSData *)data customStructType:(const char *)type
+{
+    NSParameterAssert(data);
+    NSParameterAssert(type);
+    
+    if (nil == data || NULL == type) {
+        return nil;
+    }
+    
+    NSValue *value = nil;
+    if (nil != data) {
+        @try {
+            value = [self valueWithBytes:data.bytes objCType:type];
+        }
+        @catch (NSException *exception) {
+            value = nil;
+        }
+        @finally {
+            return value;
+        }
+    }
 }
 
 @end

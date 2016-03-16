@@ -122,16 +122,18 @@ static id mappingToJSONObject(id obj)
         return NSStringFromClass(obj);
         
     } else { // user defined class
+        BOOL ignoreNSNull = [[obj class] tc_JSONMappingIgnoreNSNull];
         NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_propertyNameJSONMapping];
         __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass([obj class]);
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        
         for (NSString *key in metaDic) {
             __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-            if (NULL == meta->_getter || meta->_ignoreJSONMapping || nameDic[key] == (id)kCFNull) {
+            if (NULL == meta->_getter || meta->_ignoreJSONMapping || nameDic[key] == (id)kCFNull || meta->_encodingType == kTCEncodingTypeBlock) {
                 continue;
             }
             
-            id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta];
+            id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:ignoreNSNull];
             if (nil != value) {
                 value = mappingToJSONObject(value);
             }
@@ -150,9 +152,14 @@ static id mappingToJSONObject(id obj)
 
 @implementation NSObject (TCJSONMapping)
 
-- (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping
++ (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping
 {
     return nil;
+}
+
++ (BOOL)tc_JSONMappingIgnoreNSNull
+{
+    return YES;
 }
 
 - (id)tc_JSONObject
@@ -180,6 +187,16 @@ static id mappingToJSONObject(id obj)
         return nil;
     }
     return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+}
+
+@end
+
+
+@implementation NSString (TCJSONMapping)
+
+- (id)tc_JSONObject
+{
+    return [NSJSONSerialization JSONObjectWithData:[self dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
 }
 
 @end

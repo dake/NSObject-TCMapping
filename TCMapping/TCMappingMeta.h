@@ -27,7 +27,7 @@ typedef NS_ENUM (NSUInteger, TCEncodingType) {
     kTCEncodingTypeNSNull,
     kTCEncodingTypeNSAttributedString,
     
-    // id type
+    // no class obj type
     kTCEncodingTypeId,
     kTCEncodingTypeBlock,
     kTCEncodingTypeClass,
@@ -75,8 +75,16 @@ NS_INLINE BOOL isTypeNeedSerialization(TCEncodingType type)
 {
     return type == kTCEncodingTypeCPointer ||
     type == kTCEncodingTypeCArray ||
+    type == kTCEncodingTypeCustomStruct ||
     type == kTCEncodingTypeBitStruct ||
     type == kTCEncodingTypeUnion;
+}
+
+NS_INLINE BOOL isNoClassObj(TCEncodingType type)
+{
+    return type == kTCEncodingTypeId ||
+    type == kTCEncodingTypeBlock ||
+    type == kTCEncodingTypeClass;
 }
 
 NS_ASSUME_NONNULL_BEGIN
@@ -109,8 +117,8 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
 @protocol TCNSValueSerializer <NSObject>
 
 @optional
-- (NSData *)tc_dataForKey:(NSString *)key meta:(TCMappingMeta *)meta;
-- (void)tc_setData:(nullable NSData *)data forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (nullable NSString *)tc_stringValueForKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (void)tc_setStringValue:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 
 @end
 
@@ -126,9 +134,7 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
  NSValue unsupport: bit struct,
  */
 
-
-
-- (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta ignoreNSNull:(BOOL)ignoreNSNull;
 - (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 - (void)copy:(id)copy forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 
@@ -139,6 +145,9 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
 
 - (nullable NSData *)unsafeDataForCustomStruct;
 + (nullable instancetype)valueWitUnsafeData:(NSData *)data customStructType:(const char *)type;
+
+- (nullable NSString *)unsafeStringValueForCustomStruct;
++ (nullable instancetype)valueWitUnsafeStringValue:(NSString *)str customStructType:(const char *)type;
 
 @end
 

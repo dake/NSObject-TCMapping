@@ -18,10 +18,18 @@
  
  @return the mapping dictionary
  */
-- (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping;
++ (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping;
++ (BOOL)tc_JSONMappingIgnoreNSNull;
 
 - (id/*NSArray or NSDictionary*/)tc_JSONObject;
 - (NSData *)tc_JSONData;
 - (NSString *)tc_JSONString;
+
+@end
+
+
+@interface NSString (TCJSONMapping)
+
+- (id)tc_JSONObject;
 
 @end

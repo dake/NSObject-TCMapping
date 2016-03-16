@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B70F10F51C996941009FB9CC /* TCMappingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F10F41C996941009FB9CC /* TCMappingTests.m */; };
 		B70F4B171BDF547E00EB743A /* TCWeiboModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F4B161BDF547E00EB743A /* TCWeiboModel.m */; };
 		B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */; };
 		B711B6A11C8833EE00BC437C /* TCMappingMeta.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6A01C8833EE00BC437C /* TCMappingMeta.m */; };
@@ -86,6 +87,16 @@
 		D9EB04111BD64D1E00B3E0F5 /* NSString+MJExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = D9EB03DB1BD64D1E00B3E0F5 /* NSString+MJExtension.m */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B70F10F61C9969E4009FB9CC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D9B193731BAC714D00F93933 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D9B1937A1BAC714D00F93933;
+			remoteInfo = ModelBenchmark;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		D941E9AB1BD54E1900A7B905 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -99,6 +110,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B70F10EC1C996904009FB9CC /* ModelBenchmarkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ModelBenchmarkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B70F10F01C996904009FB9CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B70F10F41C996941009FB9CC /* TCMappingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingTests.m; sourceTree = "<group>"; };
 		B70F4B151BDF547E00EB743A /* TCWeiboModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCWeiboModel.h; sourceTree = "<group>"; };
 		B70F4B161BDF547E00EB743A /* TCWeiboModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCWeiboModel.m; sourceTree = "<group>"; };
 		B711B6901C87F44700BC437C /* NSObject+TCNSCoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCNSCoding.h"; sourceTree = "<group>"; };
@@ -268,6 +282,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B70F10E91C996904009FB9CC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D9B193781BAC714D00F93933 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -278,6 +299,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B70F10ED1C996904009FB9CC /* ModelBenchmarkTests */ = {
+			isa = PBXGroup;
+			children = (
+				B70F10F41C996941009FB9CC /* TCMappingTests.m */,
+				B70F10F01C996904009FB9CC /* Info.plist */,
+			);
+			path = ModelBenchmarkTests;
+			sourceTree = "<group>";
+		};
 		B7AC83551BDE3C9000679B78 /* TCMapping */ = {
 			isa = PBXGroup;
 			children = (
@@ -310,6 +340,7 @@
 			isa = PBXGroup;
 			children = (
 				D9B1937D1BAC714D00F93933 /* ModelBenchmark */,
+				B70F10ED1C996904009FB9CC /* ModelBenchmarkTests */,
 				D9B1937C1BAC714D00F93933 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -318,6 +349,7 @@
 			isa = PBXGroup;
 			children = (
 				D9B1937B1BAC714D00F93933 /* ModelBenchmark.app */,
+				B70F10EC1C996904009FB9CC /* ModelBenchmarkTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -666,6 +698,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		B70F10EB1C996904009FB9CC /* ModelBenchmarkTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B70F10F31C996904009FB9CC /* Build configuration list for PBXNativeTarget "ModelBenchmarkTests" */;
+			buildPhases = (
+				B70F10E81C996904009FB9CC /* Sources */,
+				B70F10E91C996904009FB9CC /* Frameworks */,
+				B70F10EA1C996904009FB9CC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B70F10F71C9969E4009FB9CC /* PBXTargetDependency */,
+			);
+			name = ModelBenchmarkTests;
+			productName = ModelBenchmarkTests;
+			productReference = B70F10EC1C996904009FB9CC /* ModelBenchmarkTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		D9B1937A1BAC714D00F93933 /* ModelBenchmark */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = D9B1939E1BAC714D00F93933 /* Build configuration list for PBXNativeTarget "ModelBenchmark" */;
@@ -694,6 +744,10 @@
 				LastUpgradeCheck = 0700;
 				ORGANIZATIONNAME = ibireme;
 				TargetAttributes = {
+					B70F10EB1C996904009FB9CC = {
+						CreatedOnToolsVersion = 7.2.1;
+						TestTargetID = D9B1937A1BAC714D00F93933;
+					};
 					D9B1937A1BAC714D00F93933 = {
 						CreatedOnToolsVersion = 6.4;
 					};
@@ -713,11 +767,19 @@
 			projectRoot = "";
 			targets = (
 				D9B1937A1BAC714D00F93933 /* ModelBenchmark */,
+				B70F10EB1C996904009FB9CC /* ModelBenchmarkTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B70F10EA1C996904009FB9CC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D9B193791BAC714D00F93933 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -734,6 +796,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B70F10E81C996904009FB9CC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B70F10F51C996941009FB9CC /* TCMappingTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		D9B193771BAC714D00F93933 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -814,6 +884,14 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		B70F10F71C9969E4009FB9CC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = D9B1937A1BAC714D00F93933 /* ModelBenchmark */;
+			targetProxy = B70F10F61C9969E4009FB9CC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXVariantGroup section */
 		D9B193881BAC714D00F93933 /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
@@ -834,6 +912,37 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		B70F10F11C996904009FB9CC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = ModelBenchmarkTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = dake.ModelBenchmarkTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ModelBenchmark.app/ModelBenchmark";
+			};
+			name = Debug;
+		};
+		B70F10F21C996904009FB9CC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				INFOPLIST_FILE = ModelBenchmarkTests/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = dake.ModelBenchmarkTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ModelBenchmark.app/ModelBenchmark";
+			};
+			name = Release;
+		};
 		D9B1939C1BAC714D00F93933 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -969,6 +1078,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B70F10F31C996904009FB9CC /* Build configuration list for PBXNativeTarget "ModelBenchmarkTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B70F10F11C996904009FB9CC /* Debug */,
+				B70F10F21C996904009FB9CC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		D9B193761BAC714D00F93933 /* Build configuration list for PBXProject "ModelBenchmark" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

@@ -250,17 +250,6 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 break;
             }
                 
-            case kTCEncodingTypeClass: {
-                if (class_isMetaClass(object_getClass(value))) {
-                    ret = value;
-                } else if ([value isKindOfClass:NSString.class]) {
-                    ret = NSClassFromString(value);
-                }
-                
-                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
-                break;
-            }
-                
             case kTCEncodingTypeBlock: {
                 if ([value isKindOfClass:meta->_typeClass]) {
                     ret = value;
@@ -274,13 +263,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 ret = value;
                 break;
         }
-    } else if (type == kTCEncodingTypeSEL) {
-        if ([value isKindOfClass:NSString.class]) {
-            ret = value;
-        }
-        
-        NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
-        
+    
     } else if (meta->_isStruct) { // NSValue <- NSString
         NSValue *tmpValue = nil;
         if ([value isKindOfClass:NSValue.class]) {
@@ -289,14 +272,15 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
             if ([value isKindOfClass:NSString.class]) {
                 tmpValue = mappingNSValueWithString(value ,meta);
             }
-        } else {
-            ret = value;
         }
         
         if (nil != tmpValue && strcmp(tmpValue.objCType, meta->_typeName.UTF8String) == 0) {
             ret = tmpValue;
         }
-
+        
+        if (nil == ret) {
+            ret = value;
+        }
     } else {
         ret = value;
     }
@@ -553,6 +537,9 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             __unsafe_unretained NSDictionary *valueDataDic = (NSDictionary *)value;
             if (valueDataDic.count > 0) {
                 __unsafe_unretained Class klass = meta->_typeClass;
+                if (Nil == klass) {
+                    klass = classForType(typeDic[propertyName]);
+                }
                 if (Nil == klass) {
                     value = nil;
                 } else if (meta->_encodingType == kTCEncodingTypeNSDictionary) {

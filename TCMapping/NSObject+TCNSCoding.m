@@ -7,6 +7,8 @@
 //
 
 #import "NSObject+TCNSCoding.h"
+#import <objc/runtime.h>
+
 #import "TCMappingMeta.h"
 
 
@@ -29,7 +31,10 @@
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter) {
+        TCEncodingType type = meta->_encodingType;
+        
+        if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter ||
+            type == kTCEncodingTypeBlock) {
             continue;
         }
         
@@ -39,10 +44,27 @@
         } else if ((id)kCFNull == mapKey) {
             continue;
         }
-    
-        NSObject *value = [self valueForKey:key meta:meta];
-        NSAssert(nil == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass(value.class), value.class);
-
+        
+        id value = nil;
+        if (type == kTCEncodingTypeClass) {
+            value = [self valueForKey:key];
+            if (![value isKindOfClass:NSString.class] && class_isMetaClass(object_getClass(value))) {
+                value = NSStringFromClass(value);
+            }
+            
+            if (![value isKindOfClass:NSString.class]) {
+                continue;
+            }
+        } else {
+            value = [self valueForKey:key meta:meta ignoreNSNull:NO];
+        }
+        
+        if (nil == value) {
+            continue;
+        }
+        
+        NSAssert((id)kCFNull == value || [value respondsToSelector:@selector(encodeWithCoder:)], @"+[%@ encodeWithCoder:] unrecognized selector sent to class %@", NSStringFromClass([value class]), [value class]);
+        
         [coder encodeObject:value forKey:mapKey];
     }
 }
@@ -94,7 +116,7 @@
 
 - (instancetype)tc_copy
 {
-    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use copy instead of tc_copy!");
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use copy instead of %@!", NSStringFromSelector(_cmd));
     if ([TCMappingMeta isNSTypeForClass:self.class]) {
         return nil;
     }
@@ -108,7 +130,7 @@
         if (NULL == meta->_getter || NULL == meta->_setter || [ignoreList containsObject:key]) {
             continue;
         }
-
+        
         [self copy:copy forKey:key meta:meta];
     }
     
@@ -124,7 +146,7 @@
 
 - (NSUInteger)tc_hash
 {
-    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use hash instead of tc_hash!");
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use hash instead of %@!", NSStringFromSelector(_cmd));
     if ([TCMappingMeta isNSTypeForClass:self.class]) {
         return (NSUInteger)((__bridge void *)self);
     }
@@ -136,7 +158,15 @@
         if (NULL == meta->_getter) {
             continue;
         }
-        value ^= [[self valueForKey:NSStringFromSelector(meta->_getter) meta:meta] hash];
+        
+        id obj = nil;
+        if (meta->_isObj || meta->_encodingType == kTCEncodingTypeCustomStruct) {
+            obj = [self valueForKey:key];
+        } else {
+            obj = [self valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:YES];
+        }
+        
+        value ^= [obj hash];
     }
     
     if (0 == value) {
@@ -148,7 +178,7 @@
 
 - (BOOL)tc_isEqual:(id)object
 {
-    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use isEqual: instead of tc_isEqual:!");
+    NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use isEqual: instead of %@!", NSStringFromSelector(_cmd));
     
     if (self == object) {
         return YES;
@@ -166,8 +196,8 @@
         }
         
         NSString *getter = NSStringFromSelector(meta->_getter);
-        id left = [self valueForKey:getter meta:meta];
-        id right = [object valueForKey:getter meta:meta];
+        id left = [self valueForKey:getter meta:meta ignoreNSNull:YES];
+        id right = [object valueForKey:getter meta:meta ignoreNSNull:YES];
         if (left == right) {
             continue;
         } else if (nil == left || nil == right) {

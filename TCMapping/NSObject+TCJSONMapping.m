@@ -129,7 +129,10 @@ static id mappingToJSONObject(id obj)
         
         for (NSString *key in metaDic) {
             __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-            if (NULL == meta->_getter || meta->_ignoreJSONMapping || nameDic[key] == (id)kCFNull || meta->_encodingType == kTCEncodingTypeBlock) {
+            if (NULL == meta->_getter ||
+                meta->_ignoreJSONMapping ||
+                nameDic[key] == (id)kCFNull ||
+                meta->_encodingType == kTCEncodingTypeBlock) {
                 continue;
             }
             
@@ -174,10 +177,7 @@ static id mappingToJSONObject(id obj)
 - (NSData *)tc_JSONData
 {
     id obj = self.tc_JSONObject;
-    if (nil == obj) {
-        return nil;
-    }
-    return [NSJSONSerialization dataWithJSONObject:obj options:0 error:NULL];
+    return nil != obj ? [NSJSONSerialization dataWithJSONObject:obj options:0 error:NULL] : nil;
 }
 
 - (NSString *)tc_JSONString
@@ -197,6 +197,16 @@ static id mappingToJSONObject(id obj)
 - (id)tc_JSONObject
 {
     return [NSJSONSerialization JSONObjectWithData:[self dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+}
+
+@end
+
+
+@implementation NSData (TCJSONMapping)
+
+- (id)tc_JSONObject
+{
+    return [NSJSONSerialization JSONObjectWithData:self options:0 error:NULL];
 }
 
 @end

@@ -400,14 +400,14 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     TCEncodingType type = meta->_encodingType;
     
     if (isTypeNeedSerialization(type)) {
-        if ([self.class instancesRespondToSelector:@selector(tc_stringValueForKey:meta:)]) {
-            id value = [self tc_stringValueForKey:key meta:meta];
+        if ([self.class instancesRespondToSelector:@selector(tc_serializedStringForKey:meta:)]) {
+            id value = [self tc_serializedStringForKey:key meta:meta];
             if (nil == value && type == kTCEncodingTypeCustomStruct) {
                 value = [self valueForKey:key];
             }
             return value;
         } else {
-            NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_stringValueForKey:meta:)), key];
+            NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_serializedStringForKey:meta:)), key];
             NSLog(@"%@", msg);
             NSAssert(false, msg);
         }
@@ -450,10 +450,10 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
         if ((id)kCFNull == value || [value isKindOfClass:NSString.class]) {
             NSString *str = (id)kCFNull == value ? nil : value;
             
-            if ([self.class instancesRespondToSelector:@selector(tc_setStringValue:forKey:meta:)]) {
-                [self tc_setStringValue:str forKey:key meta:meta];
+            if ([self.class instancesRespondToSelector:@selector(tc_setSerializedString:forKey:meta:)]) {
+                [self tc_setSerializedString:str forKey:key meta:meta];
             } else {
-                NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_setStringValue:forKey:meta:)), key];
+                NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_setSerializedString:forKey:meta:)), key];
                 NSLog(@"%@", msg);
                 NSAssert(false, msg);
             }

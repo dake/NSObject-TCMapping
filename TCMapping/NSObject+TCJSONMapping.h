@@ -33,3 +33,10 @@
 - (id)tc_JSONObject;
 
 @end
+
+
+@interface NSData (TCJSONMapping)
+
+- (id)tc_JSONObject;
+
+@end

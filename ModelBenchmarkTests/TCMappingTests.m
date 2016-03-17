@@ -90,7 +90,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     return NO;
 }
 
-- (NSString *)tc_stringValueForKey:(NSString *)key meta:(TCMappingMeta *)meta
+- (NSString *)tc_serializedStringForKey:(NSString *)key meta:(TCMappingMeta *)meta
 {
     if ([key isEqualToString:PropertySTR(testStruct)]) {
         return [(NSValue *)[self valueForKey:key] unsafeStringValueForCustomStruct];
@@ -107,7 +107,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     return nil;
 }
 
-- (void)tc_setStringValue:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta
+- (void)tc_setSerializedString:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta
 {
     if ([key isEqualToString:PropertySTR(testStruct)]) {
         [self setValue:[NSValue valueWitUnsafeStringValue:str customStructType:meta->_typeName.UTF8String] forKey:key];

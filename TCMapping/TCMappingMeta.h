@@ -117,8 +117,18 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
 @protocol TCNSValueSerializer <NSObject>
 
 @optional
-- (nullable NSString *)tc_stringValueForKey:(NSString *)key meta:(TCMappingMeta *)meta;
-- (void)tc_setStringValue:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+
+/**
+ property callback for: c pointer (exclude char *, char const *), c array, bit field struct, common struct, union
+ 
+ */
+- (nullable NSString *)tc_serializedStringForKey:(NSString *)key meta:(TCMappingMeta *)meta;
+
+/**
+ property callback for: c pointer (include char *, char const *), c array, bit field struct, common struct, union
+ 
+ */
+- (void)tc_setSerializedString:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 
 @end
 
@@ -126,12 +136,12 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
 @interface NSObject (TCMappingMeta) <TCNSValueSerializer>
 
 /**
- @brief	kvc expand
+ @brief	extend KVC for unsupport type
 
  http://stackoverflow.com/questions/18542664/assigning-to-a-property-of-type-sel-using-kvc
- kvc unsupport: c pointer (include char *, char const *), bit struct, union, SEL
+ KVC unsupport: c pointer (include char *, char const *), c array, bit struct, union, SEL
  
- NSValue unsupport: bit struct,
+ NSValue unsupport: bit field struct,
  */
 
 - (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta ignoreNSNull:(BOOL)ignoreNSNull;

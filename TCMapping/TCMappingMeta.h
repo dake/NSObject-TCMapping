@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-typedef NS_ENUM (NSUInteger, TCEncodingType) {
+typedef NS_ENUM (uint16_t, TCEncodingType) {
     kTCEncodingTypeUnknown = 0,
     
     // sys type
@@ -68,43 +68,93 @@ typedef NS_ENUM (NSUInteger, TCEncodingType) {
     kTCEncodingTypeUIRectEdge,
     
     kTCEncodingTypeBitStruct, // bit field struct
-    kTCEncodingTypeCustomStruct,
+    kTCEncodingTypeCommonStruct,
+    
 };
 
-NS_INLINE BOOL isTypeNeedSerialization(TCEncodingType type)
+// 4 bit, [0, 15] << 8
+typedef NS_OPTIONS (uint16_t, TCEncodingOption) {
+    kTCEncodingOptionObj = 1 << 8,
+    kTCEncodingOptionStruct = 2 << 8,
+    kTCEncodingOptionIgnoreMapping = 3 << 8,
+    kTCEncodingOptionIgnoreJSONMapping = 4 << 8,
+    kTCEncodingOptionIgnoreNSCoding = 5 << 8,
+    kTCEncodingOptionIgnoreCopying = 6 << 8,
+};
+
+typedef NS_ENUM(NSUInteger, TCEncodingInfo) {
+    kTCEncodingInfoUnknown = 0,
+    
+    kTCEncodingTypeMask = 0xff,
+    kTCEncodingOptionMask = 0xf00,
+};
+
+
+NS_INLINE BOOL tc_ignoreMappingForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreMapping;
+}
+
+NS_INLINE BOOL tc_ignoreJSONMappingForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreJSONMapping;
+}
+
+NS_INLINE BOOL tc_ignoreNSCodingForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreNSCoding;
+}
+
+NS_INLINE BOOL tc_ignoreCopyingForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreCopying;
+}
+
+
+NS_INLINE TCEncodingType tc_typeForInfo(TCEncodingInfo info)
+{
+    return info & kTCEncodingTypeMask;
+}
+
+NS_INLINE BOOL tc_isObjForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionObj;
+}
+
+NS_INLINE BOOL tc_isStructForInfo(TCEncodingInfo info)
+{
+    return (info & kTCEncodingOptionMask) == kTCEncodingOptionStruct;
+}
+
+NS_INLINE BOOL tc_isTypeNeedSerialization(TCEncodingType type)
 {
     return type == kTCEncodingTypeCPointer ||
     type == kTCEncodingTypeCArray ||
-    type == kTCEncodingTypeCustomStruct ||
+    type == kTCEncodingTypeCommonStruct ||
     type == kTCEncodingTypeBitStruct ||
     type == kTCEncodingTypeUnion;
 }
 
-NS_INLINE BOOL isNoClassObj(TCEncodingType type)
+NS_INLINE BOOL tc_isNoClassObj(TCEncodingType type)
 {
     return type == kTCEncodingTypeId ||
     type == kTCEncodingTypeBlock ||
     type == kTCEncodingTypeClass;
 }
 
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface TCMappingMeta : NSObject
 {
 @public
-    BOOL _isObj;
     NSString *_typeName;
     NSString *_propertyName;
     Class _typeClass;
-    TCEncodingType _encodingType;
+    TCEncodingInfo _info;
     
     SEL _getter;
     SEL _setter;
-    BOOL _ignoreMapping;
-    BOOL _ignoreJSONMapping;
-    BOOL _ignoreNSCoding;
-    BOOL _ignoreCopying;
-    BOOL _isStruct;
 }
 
 + (BOOL)isNSTypeForClass:(Class)klass;

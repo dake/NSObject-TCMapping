@@ -31,9 +31,9 @@
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        TCEncodingType type = meta->_encodingType;
+        TCEncodingType type = tc_typeForInfo(meta->_info);
         
-        if (meta->_ignoreNSCoding || NULL == meta->_getter || NULL == meta->_setter ||
+        if (tc_ignoreNSCodingForInfo(meta->_info) || NULL == meta->_getter || NULL == meta->_setter ||
             type == kTCEncodingTypeBlock) {
             continue;
         }
@@ -86,7 +86,7 @@
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        if (meta->_ignoreNSCoding || NULL == meta->_setter) {
+        if (tc_ignoreNSCodingForInfo(meta->_info) || NULL == meta->_setter) {
             continue;
         }
         NSString *mapKey = nameMapping[key];
@@ -160,7 +160,7 @@
         }
         
         id obj = nil;
-        if (meta->_isObj || meta->_encodingType == kTCEncodingTypeCustomStruct) {
+        if (tc_isObjForInfo(meta->_info) || tc_typeForInfo(meta->_info) == kTCEncodingTypeCommonStruct) {
             obj = [self valueForKey:key];
         } else {
             obj = [self valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:YES];

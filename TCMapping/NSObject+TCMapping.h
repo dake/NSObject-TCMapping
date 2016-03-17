@@ -59,9 +59,10 @@
  */
 + (NSDictionary<NSString *, id> *)tc_propertyForPrimaryKey;
 
++ (BOOL)tc_mappingIgnoreNSNull;
+
 + (NSTimeZone *)tc_dateTimeZone;
 + (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
-+ (BOOL)tc_mappingIgnoreNSNull;
 
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;

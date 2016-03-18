@@ -164,6 +164,30 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 
 
 
+@interface TestIgnoreModel : NSObject <NSCoding, NSCopying>
+
+@property (nonatomic, strong) NSNumber<TCMappingIgnore> *num;
+@property (nonatomic, copy) NSString<NSCopyingIgnore> *str;
+@property (nonatomic, weak) Class klass;
+@property (nonatomic, strong) NSURL<TCJSONMappingIgnore> *url;
+
+
+@end
+
+@implementation TestIgnoreModel
+
++ (NSDictionary *)tc_propertyNSCodingMapping
+{
+    return @{PropertySTR(klass): NSNull.null};
+}
+
+- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
+- (instancetype)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
+- (instancetype)copyWithZone:(NSZone *)zone { return self.tc_copy; }
+- (NSUInteger)hash { return self.tc_hash; }
+- (BOOL)isEqual:(id)object { return [self tc_isEqual:object]; }
+
+@end
 
 
 
@@ -246,6 +270,54 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     coding.block = model.block;
     coding.model = model.model;
     XCTAssertTrue([coding isEqual:model]);
+}
+
+- (void)testIgnoreModel
+{
+    NSDictionary *dic = @{PropertySTR(num): @1,
+                          PropertySTR(str): @"3444",
+                          PropertySTR(klass): TestIgnoreModel.class,
+                          PropertySTR(url): @"http://glade.tk"};
+    
+    
+    // mapping
+    TestIgnoreModel *model = [TestIgnoreModel tc_mappingWithDictionary:dic];
+    XCTAssertNotNil(model);
+    XCTAssertNil(model.num);
+    XCTAssertTrue([model.str isEqualToString:dic[PropertySTR(str)]]);
+    XCTAssertTrue(model.klass == dic[PropertySTR(klass)]);
+    XCTAssertTrue([model.url.absoluteString isEqualToString:dic[PropertySTR(url)]]);
+    
+    
+    // copying
+    model.num = dic[PropertySTR(num)];
+    TestIgnoreModel *copy = model.copy;
+    XCTAssertNotNil(copy);
+    XCTAssertNil(copy.str);
+    XCTAssertTrue([copy.num isEqualToNumber:dic[PropertySTR(num)]]);
+    XCTAssertTrue(copy.klass == dic[PropertySTR(klass)]);
+    XCTAssertTrue([copy.url.absoluteString isEqualToString:dic[PropertySTR(url)]]);
+    
+    
+    // coding
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:model];
+    XCTAssertNotNil(data);
+    
+    TestIgnoreModel *coding = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    XCTAssertNotNil(coding);
+    XCTAssertNil(coding.klass);
+    XCTAssertTrue([coding.num isEqualToNumber:dic[PropertySTR(num)]]);
+    XCTAssertTrue([coding.str isEqualToString:dic[PropertySTR(str)]]);
+    XCTAssertTrue([coding.url.absoluteString isEqualToString:dic[PropertySTR(url)]]);
+    
+    
+    // json
+    NSDictionary *json = model.tc_JSONObject;
+    XCTAssertNotNil(json);
+    XCTAssertNil(json[PropertySTR(url)]);
+    XCTAssertTrue([json[PropertySTR(num)] isEqualToNumber:dic[PropertySTR(num)]]);
+    XCTAssertTrue([json[PropertySTR(str)] isEqualToString:dic[PropertySTR(str)]]);
+    XCTAssertTrue(NSClassFromString(json[PropertySTR(klass)]) == dic[PropertySTR(klass)]);
 }
 
 

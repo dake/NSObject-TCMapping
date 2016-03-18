@@ -127,7 +127,7 @@
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        if (NULL == meta->_getter || NULL == meta->_setter || [ignoreList containsObject:key]) {
+        if (NULL == meta->_getter || NULL == meta->_setter || tc_ignoreCopyingForInfo(meta->_info) || [ignoreList containsObject:key]) {
             continue;
         }
         

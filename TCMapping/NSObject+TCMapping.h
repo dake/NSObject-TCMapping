@@ -17,7 +17,7 @@
 @end
 
 
-@protocol TCMappingIgnore;
+@protocol TCMappingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCMapping)
 

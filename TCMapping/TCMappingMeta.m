@@ -161,24 +161,24 @@ NS_INLINE TCEncodingType typeForNSType(Class typeClass)
 }
 
 
-NS_INLINE TCEncodingOption ignoreOptForProtocols(NSString *ignoreProtocol)
+NS_INLINE TCEncodingIgnore ignoreForProtocols(NSString *ignoreProtocol)
 {
-    TCEncodingOption opt = 0;
+    TCEncodingIgnore ignore = 0;
     
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCMappingIgnore))].location != NSNotFound) {
-        opt |= kTCEncodingOptionIgnoreMapping;
+        ignore |= kTCEncodingIgnoreMapping;
     }
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCJSONMappingIgnore))].location != NSNotFound) {
-        opt |= kTCEncodingOptionIgnoreJSONMapping;
+        ignore |= kTCEncodingIgnoreJSONMapping;
     }
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(NSCodingIgnore))].location != NSNotFound) {
-        opt |= kTCEncodingOptionIgnoreNSCoding;
+        ignore |= kTCEncodingIgnoreNSCoding;
     }
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(NSCopyingIgnore))].location != NSNotFound) {
-        opt |= kTCEncodingOptionIgnoreCopying;
+        ignore |= kTCEncodingIgnoreCopying;
     }
     
-    return opt;
+    return ignore;
 }
 
 static TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
@@ -218,7 +218,7 @@ static TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                             if (range.location != NSNotFound) {
                                 
                                 NSString *ignoreProtocol = [typeName substringWithRange:NSMakeRange(range.location + 1, typeName.length - range.location - 2)];
-                                info |= ignoreOptForProtocols(ignoreProtocol);
+                                info |= ignoreForProtocols(ignoreProtocol);
                                 
                                 if (range.location != 0) {
                                     typeName = [typeName substringToIndex:range.location];

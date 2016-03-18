@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@protocol TCJSONMappingIgnore;
+@protocol TCJSONMappingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCJSONMapping)
 

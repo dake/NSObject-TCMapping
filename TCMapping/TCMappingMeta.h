@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-typedef NS_ENUM (uint16_t, TCEncodingType) {
+typedef NS_ENUM (uint8_t, TCEncodingType) {
     kTCEncodingTypeUnknown = 0,
     
     // sys type
@@ -76,10 +76,14 @@ typedef NS_ENUM (uint16_t, TCEncodingType) {
 typedef NS_OPTIONS (uint16_t, TCEncodingOption) {
     kTCEncodingOptionObj = 1 << 8,
     kTCEncodingOptionStruct = 2 << 8,
-    kTCEncodingOptionIgnoreMapping = 3 << 8,
-    kTCEncodingOptionIgnoreJSONMapping = 4 << 8,
-    kTCEncodingOptionIgnoreNSCoding = 5 << 8,
-    kTCEncodingOptionIgnoreCopying = 6 << 8,
+};
+
+// 4 bit, [0, 15] << 12
+typedef NS_OPTIONS (uint16_t, TCEncodingIgnore) {
+    kTCEncodingIgnoreMapping = (1<<0) << 12,
+    kTCEncodingIgnoreJSONMapping = (1<<1) << 12,
+    kTCEncodingIgnoreNSCoding = (1<<2) << 12,
+    kTCEncodingIgnoreCopying = (1<<3) << 12,
 };
 
 typedef NS_ENUM(NSUInteger, TCEncodingInfo) {
@@ -87,27 +91,28 @@ typedef NS_ENUM(NSUInteger, TCEncodingInfo) {
     
     kTCEncodingTypeMask = 0xff,
     kTCEncodingOptionMask = 0xf00,
+    kTCEncodingIgnoreMask = 0xf000,
 };
 
 
 NS_INLINE BOOL tc_ignoreMappingForInfo(TCEncodingInfo info)
 {
-    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreMapping;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreMapping) == kTCEncodingIgnoreMapping;
 }
 
 NS_INLINE BOOL tc_ignoreJSONMappingForInfo(TCEncodingInfo info)
 {
-    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreJSONMapping;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreJSONMapping) == kTCEncodingIgnoreJSONMapping;
 }
 
 NS_INLINE BOOL tc_ignoreNSCodingForInfo(TCEncodingInfo info)
 {
-    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreNSCoding;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreNSCoding) == kTCEncodingIgnoreNSCoding;
 }
 
 NS_INLINE BOOL tc_ignoreCopyingForInfo(TCEncodingInfo info)
 {
-    return (info & kTCEncodingOptionMask) == kTCEncodingOptionIgnoreCopying;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreCopying) == kTCEncodingIgnoreCopying;
 }
 
 

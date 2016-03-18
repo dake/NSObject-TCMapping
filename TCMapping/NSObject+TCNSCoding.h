@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 
-@protocol NSCodingIgnore;
+@protocol NSCodingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCNSCoding)
 
@@ -31,7 +31,7 @@
 
 #pragma mark - TCNSCopying
 
-@protocol NSCopyingIgnore;
+@protocol NSCopyingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCNSCopying)
 

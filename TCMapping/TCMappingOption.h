@@ -20,7 +20,7 @@
 /**
  @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, id> *propertyMappingType;
+@property (nonatomic, strong) NSDictionary<NSString *, Class> *propertyMappingType;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
@@ -33,6 +33,9 @@
 @property (nonatomic, strong) NSTimeZone *dateTimeZone; // for time string -> NSDate
 
 @property (nonatomic, copy) NSTimeInterval (^timestampToSecondSince1970)(NSTimeInterval timestamp, BOOL *ignoreReturn);
+
++ (instancetype)optionWithNameMapping:(NSDictionary<NSString *, NSString *> *)nameMapping;
++ (instancetype)optionWithMappingType:(NSDictionary<NSString *, Class> *)mappingType;
 
 
 #pragma mark - TCNSCoding

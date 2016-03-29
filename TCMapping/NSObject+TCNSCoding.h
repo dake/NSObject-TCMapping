@@ -7,17 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TCMappingOption.h"
 
 
 @protocol NSCodingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCNSCoding)
 
-/**
- @brief	format: @{@"propertyName": @"coding key" or NSNull.null for ignore"}
- 
- */
-+ (NSDictionary<NSString *, NSString *> *)tc_propertyNSCodingMapping;
++ (TCMappingOption *)tc_mappingOption;
 
 // - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (void)tc_encodeWithCoder:(NSCoder *)coder;
@@ -35,7 +32,7 @@
 
 @interface NSObject (TCNSCopying)
 
-+ (NSArray<NSString *> *)tc_propertyCopyIgnore;
++ (TCMappingOption *)tc_mappingOption;
 
 // - (instancetype)copyWithZone:(NSZone *)zone { return self.tc_copy; }
 - (instancetype)tc_copy;

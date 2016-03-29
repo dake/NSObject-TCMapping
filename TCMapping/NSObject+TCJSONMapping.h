@@ -7,19 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TCMappingOption.h"
 
 
 @protocol TCJSONMappingIgnore; // unavailable for `Class`
 
 @interface NSObject (TCJSONMapping)
 
-/**
- @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
- 
- @return the mapping dictionary
- */
-+ (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping;
-+ (BOOL)tc_JSONMappingIgnoreNSNull;
++ (TCMappingOption *)tc_mappingOption;
 
 - (id/*NSArray or NSDictionary*/)tc_JSONObject;
 - (NSData *)tc_JSONData;

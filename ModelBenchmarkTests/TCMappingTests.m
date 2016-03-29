@@ -1,6 +1,6 @@
 //
 //  TCMappingTests.m
-//  SudiyiClient
+//  TCKit
 //
 //  Created by dake on 16/3/16.
 //  Copyright © 2016年 dake. All rights reserved.
@@ -80,14 +80,16 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 
 @implementation TestModel
 
-+ (NSDictionary *)tc_propertyTypeFormat
++ (TCMappingOption *)tc_mappingOption
 {
-    return @{PropertySTR(model): @"TestModel2"};
-}
-
-+ (BOOL)tc_JSONMappingIgnoreNSNull
-{
-    return NO;
+    static TCMappingOption *opt = nil;
+    if (nil == opt) {
+        opt = [[TCMappingOption alloc] init];
+        opt.propertyMappingType = @{PropertySTR(model): @"TestModel2"};
+        opt.shouldJSONMappingNSNull = YES;
+    }
+    
+    return opt;
 }
 
 - (NSString *)tc_serializedStringForKey:(NSString *)key meta:(TCMappingMeta *)meta
@@ -176,9 +178,15 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 
 @implementation TestIgnoreModel
 
-+ (NSDictionary *)tc_propertyNSCodingMapping
++ (TCMappingOption *)tc_mappingOption
 {
-    return @{PropertySTR(klass): NSNull.null};
+    static TCMappingOption *opt = nil;
+    if (nil == opt) {
+        opt = [[TCMappingOption alloc] init];
+        opt.propertyNSCodingMapping = @{PropertySTR(klass): NSNull.null};
+    }
+    
+    return opt;
 }
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
@@ -196,10 +204,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 @end
 
 @implementation TCMappingTests
-{
-    @private
-    
-}
+
 
 - (void)setUp {
     [super setUp];

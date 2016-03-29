@@ -316,6 +316,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     dispatch_once(&onceToken, ^{
         s_propertyByClass = [NSMutableDictionary dictionary];
         s_recursiveLock = [[NSRecursiveLock alloc] init];
+        s_recursiveLock.name = @"recursiveLock.TCMappingMeta.TCKit";
     });
     
     

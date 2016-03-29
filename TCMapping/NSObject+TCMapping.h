@@ -7,6 +7,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "TCMappingOption.h"
 
 
 @protocol TCMappingPersistentContext <NSObject>
@@ -36,34 +37,7 @@
  
  */
 
-
-/**
- @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
- 
- @return the mapping dictionary
- */
-+ (NSDictionary<NSString *, NSString *> *)tc_propertyNameMapping;
-
-/**
- @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
- 
- @return the mapping dictionary
- */
-+ (NSDictionary<NSString *, id> *)tc_propertyTypeFormat;
-
-/**
- @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
- NSNull.null will be replace with an exact value while mapping.
- 
- @return the primary key dictionary
- */
-+ (NSDictionary<NSString *, id> *)tc_propertyForPrimaryKey;
-
-+ (BOOL)tc_mappingIgnoreNSNull;
-
-+ (NSTimeZone *)tc_dateTimeZone;
-+ (NSTimeInterval)tc_timestampToSecondSince1970:(NSTimeInterval)timestamp ignoreReturn:(BOOL *)ignore;
-
++ (TCMappingOption *)tc_mappingOption;
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context;

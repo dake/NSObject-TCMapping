@@ -122,8 +122,8 @@ static id mappingToJSONObject(id obj)
         return NSStringFromClass(obj);
         
     } else { // user defined class
-        BOOL ignoreNSNull = [[obj class] tc_JSONMappingIgnoreNSNull];
-        NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_propertyNameJSONMapping];
+        BOOL isNSNullValid = [[obj class] tc_mappingOption].shouldJSONMappingNSNull;
+        NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_mappingOption].propertyNameJSONMapping;
         __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass([obj class]);
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         
@@ -136,7 +136,7 @@ static id mappingToJSONObject(id obj)
                 continue;
             }
             
-            id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:ignoreNSNull];
+            id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:!isNSNullValid];
             if (nil != value) {
                 value = mappingToJSONObject(value);
             }
@@ -155,14 +155,9 @@ static id mappingToJSONObject(id obj)
 
 @implementation NSObject (TCJSONMapping)
 
-+ (NSDictionary<NSString *, NSString *> *)tc_propertyNameJSONMapping
++ (TCMappingOption *)tc_mappingOption
 {
     return nil;
-}
-
-+ (BOOL)tc_JSONMappingIgnoreNSNull
-{
-    return YES;
 }
 
 - (id)tc_JSONObject

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B70EF9F61CAA8BA700375342 /* TCMappingOption.m in Sources */ = {isa = PBXBuildFile; fileRef = B70EF9F51CAA8BA700375342 /* TCMappingOption.m */; };
 		B70F10F51C996941009FB9CC /* TCMappingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F10F41C996941009FB9CC /* TCMappingTests.m */; };
 		B70F4B171BDF547E00EB743A /* TCWeiboModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F4B161BDF547E00EB743A /* TCWeiboModel.m */; };
 		B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */; };
@@ -110,6 +111,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		B70EF9F41CAA8BA700375342 /* TCMappingOption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingOption.h; sourceTree = "<group>"; };
+		B70EF9F51CAA8BA700375342 /* TCMappingOption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingOption.m; sourceTree = "<group>"; };
 		B70F10EC1C996904009FB9CC /* ModelBenchmarkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ModelBenchmarkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B70F10F01C996904009FB9CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B70F10F41C996941009FB9CC /* TCMappingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingTests.m; sourceTree = "<group>"; };
@@ -311,6 +314,8 @@
 		B7AC83551BDE3C9000679B78 /* TCMapping */ = {
 			isa = PBXGroup;
 			children = (
+				B70EF9F41CAA8BA700375342 /* TCMappingOption.h */,
+				B70EF9F51CAA8BA700375342 /* TCMappingOption.m */,
 				B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */,
 				B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */,
 				B711B69F1C8833EE00BC437C /* TCMappingMeta.h */,
@@ -832,6 +837,7 @@
 				B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */,
 				D9B193841BAC714D00F93933 /* AppDelegate.m in Sources */,
 				D9EB03EA1BD64D1E00B3E0F5 /* FEMMappingUtility.m in Sources */,
+				B70EF9F61CAA8BA700375342 /* TCMappingOption.m in Sources */,
 				D9EB03E61BD64D1E00B3E0F5 /* FEMExcludableCollection.m in Sources */,
 				D9EB03E41BD64D1E00B3E0F5 /* FEMManagedObjectStore.m in Sources */,
 				D9EB04061BD64D1E00B3E0F5 /* NSValueTransformer+MTLPredefinedTransformerAdditions.m in Sources */,
@@ -1085,6 +1091,7 @@
 				B70F10F21C996904009FB9CC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		D9B193761BAC714D00F93933 /* Build configuration list for PBXProject "ModelBenchmark" */ = {
 			isa = XCConfigurationList;

@@ -53,16 +53,12 @@
 - (NSDictionary *)convertToJSONDictionary;
 @end
 
-@interface TestBaseModel : NSObject <NSCoding>
+
+@interface TCGHUser : NSObject <NSCoding>
 
 @property (nonatomic, strong) NSString *login;
 @property (nonatomic, assign) UInt64 userID;
 @property (nonatomic, strong) NSString *htmlURL;
-
-@end
-
-@interface TCGHUser : TestBaseModel <NSCoding>
-
 
 @property (nonatomic, strong) NSString *avatarURL;
 @property (nonatomic, strong) NSString *gravatarID;

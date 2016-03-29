@@ -14,7 +14,7 @@
 
 @implementation NSObject (TCNSCoding)
 
-+ (NSDictionary<NSString *, NSString *> *)tc_propertyNSCodingMapping
++ (TCMappingOption *)tc_mappingOption
 {
     return nil;
 }
@@ -27,7 +27,7 @@
         return;
     }
     
-    NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
+    NSDictionary *nameMapping = self.class.tc_mappingOption.propertyNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
@@ -82,7 +82,7 @@
         return nil;
     }
     
-    NSDictionary *nameMapping = self.class.tc_propertyNSCodingMapping;
+    NSDictionary *nameMapping = self.class.tc_mappingOption.propertyNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
@@ -109,7 +109,7 @@
 
 @implementation NSObject (TCNSCopying)
 
-+ (NSArray<NSString *> *)tc_propertyCopyIgnore
++ (TCMappingOption *)tc_mappingOption
 {
     return nil;
 }
@@ -123,7 +123,7 @@
     
     typeof(self) copy = [[self.class alloc] init];
     
-    NSArray<NSString *> *ignoreList = self.class.tc_propertyCopyIgnore;
+    NSArray<NSString *> *ignoreList = self.class.tc_mappingOption.propertyCopyIgnore;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];

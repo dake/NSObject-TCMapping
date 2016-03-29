@@ -117,71 +117,41 @@ SET_NUM(_following, @"following");
 @end
 
 
-@implementation TestBaseModel
-
-+ (NSDictionary *)tc_propertyNameMapping {
-    static NSDictionary *dic = nil;
-    
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        dic = @{
-                @"userID" : @"id",
-                @"htmlURL" : @"html_url",
-                };
-    });
-    return dic;
-}
-
-+ (NSDictionary *)modelCustomPropertyMapper {
-    return @{
-             @"userID" : @"id",
-             @"htmlURL" : @"html_url",
-             };
-}
-
-- (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
-- (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }
-
-
-@end
-
 
 @implementation TCGHUser
-+ (NSDictionary *)tc_propertyNameMapping {
-    static NSDictionary *dic = nil;
+
++ (TCMappingOption *)tc_mappingOption
+{
+    static TCMappingOption *opt = nil;
+    if (nil == opt) {
+        opt = [[TCMappingOption alloc] init];
+        opt.propertyNameMapping = @{
+                                    @"userID" : @"id",
+                                    @"avatarURL" : @"avatar_url",
+                                    @"gravatarID" : @"gravatar_id",
+                                    @"htmlURL" : @"html_url",
+                                    @"followersURL" : @"followers_url",
+                                    @"followingURL" : @"following_url",
+                                    @"gistsURL" : @"gists_url",
+                                    @"starredURL" : @"starred_url",
+                                    @"subscriptionsURL" : @"subscriptions_url",
+                                    @"organizationsURL" : @"organizations_url",
+                                    @"reposURL" : @"repos_url",
+                                    @"eventsURL" : @"events_url",
+                                    @"receivedEventsURL" : @"received_events_url",
+                                    @"siteAdmin" : @"site_admin",
+                                    @"publicRepos" : @"public_repos",
+                                    @"publicGists" : @"public_gists",
+                                    @"createdAt" : @"created_at",
+                                    @"updatedAt" : @"updated_at",
+                                    };
+        
+        opt.propertyMappingType = @{@"updatedAt": @"yyyy-MM-dd'T'HH:mm:ssZ"};
+    }
     
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSMutableDictionary *tmp = [NSMutableDictionary dictionaryWithDictionary:super.tc_propertyNameMapping];
-        [tmp addEntriesFromDictionary:@{
-                                        //                @"userID" : @"id",
-                                        @"avatarURL" : @"avatar_url",
-                                        @"gravatarID" : @"gravatar_id",
-                                        //                @"htmlURL" : @"html_url",
-                                        @"followersURL" : @"followers_url",
-                                        @"followingURL" : @"following_url",
-                                        @"gistsURL" : @"gists_url",
-                                        @"starredURL" : @"starred_url",
-                                        @"subscriptionsURL" : @"subscriptions_url",
-                                        @"organizationsURL" : @"organizations_url",
-                                        @"reposURL" : @"repos_url",
-                                        @"eventsURL" : @"events_url",
-                                        @"receivedEventsURL" : @"received_events_url",
-                                        @"siteAdmin" : @"site_admin",
-                                        @"publicRepos" : @"public_repos",
-                                        @"publicGists" : @"public_gists",
-                                        @"createdAt" : @"created_at",
-                                        @"updatedAt" : @"updated_at",
-                                        }];
-        dic = tmp;
-    });
-    return dic;
+    return opt;
 }
 
-+ (NSDictionary *)tc_propertyTypeFormat
-{
-    return @{@"updatedAt": @"yyyy-MM-dd'T'HH:mm:ssZ"};
-}
 
 - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (id)initWithCoder:(NSCoder *)aDecoder { return [self tc_initWithCoder:aDecoder]; }

@@ -12,6 +12,7 @@
 #import "NSObject+TCNSCoding.h"
 #import "NSObject+TCJSONMapping.h"
 #import "TCMappingMeta.h"
+#import "UIColor+TCUtilities.h"
 
 
 #define PropertySTR(name)   NSStringFromSelector(@selector(name))
@@ -74,6 +75,8 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 @property (nonatomic, assign) SEL selector;
 @property (nonatomic, assign) int *pointer;
 @property (nonatomic, assign) char const *cString;
+
+@property (nonatomic, strong) UIColor *color;
 
 @end
 
@@ -199,6 +202,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 
 
 
+
 @interface TCMappingTests : XCTestCase
 
 @end
@@ -219,9 +223,12 @@ typedef NS_ENUM(NSInteger, TestEnume) {
 - (void)testModelMapping
 {
     TestModel *model = [[TestModel alloc] init];
-    [model tc_mappingWithDictionary:@{PropertySTR(userId): @423, PropertySTR(frame): @"{{1,2},{3,4}}", PropertySTR(model): @{PropertySTR(frame): @"{{61,78},{3,4}}"}}];
+    [model tc_mappingWithDictionary:@{PropertySTR(userId): @423, PropertySTR(frame): @"{{1,2},{3,4}}", PropertySTR(color): @{@"rgb": @(0xff00ff)}, PropertySTR(model): @{PropertySTR(frame): @"{{61,78},{3,4}}"}}];
     XCTAssertNotNil(model);
     XCTAssertNotNil(model.model);
+    XCTAssertNotNil(model.color);
+    UIColor *color = RGBHex(0xff00ff);
+    XCTAssertEqualObjects(model.color, color);
     
     [model setValue:^{NSLog(@"xfrsfsdfsdfds");} forKey:PropertySTR(block)];
     [model setValue:NSString.class forKey:PropertySTR(klass)];
@@ -255,11 +262,13 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     // json
     NSDictionary *json = model.tc_JSONObject;
     XCTAssertNotNil(json);
+    XCTAssertNotNil(json[@"color"]);
     
     
     // mapping
     TestModel *map = [TestModel tc_mappingWithDictionary:json];
     XCTAssertNotNil(map);
+    XCTAssertEqualObjects(model.color, map.color);
     
     map.block = model.block;
     XCTAssertTrue([map isEqual:model]);
@@ -271,6 +280,8 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     
     TestModel *coding = [NSKeyedUnarchiver unarchiveObjectWithData:data];
     XCTAssertNotNil(coding);
+    XCTAssertNotNil(coding.color);
+    XCTAssertEqualObjects(model.color, coding.color);
     
     coding.block = model.block;
     coding.model = model.model;

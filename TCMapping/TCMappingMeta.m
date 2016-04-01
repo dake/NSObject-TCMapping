@@ -379,9 +379,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
             }
             return value;
         } else {
-            NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_serializedStringForKey:meta:)), key];
-            NSLog(@"%@", msg);
-            NSAssert(false, msg);
+            NSAssert(false, @"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_serializedStringForKey:meta:)), key);
         }
         return nil;
     }
@@ -389,22 +387,18 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     id value = nil;
     if (type == kTCEncodingTypeSEL) {
         SEL selector = ((SEL (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
-        value = NULL != selector ? NSStringFromSelector(selector) : (id)kCFNull;
+        value = NULL != selector ? NSStringFromSelector(selector) : nil;
         
     } else if (type == kTCEncodingTypeCString) {
         char const *cstr = ((char const * (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
-        value = NULL != cstr ? @(cstr) : (id)kCFNull;
+        value = NULL != cstr ? @(cstr) : nil;
         
     } else {
         value = [self valueForKey:NSStringFromSelector(meta->_getter)];
     }
     
-    if (ignoreNSNull) {
-        if ((id)kCFNull == value) {
-            value = nil;
-        }
-    } else if (value == nil) {
-        value = (id)kCFNull;
+    if (ignoreNSNull && (id)kCFNull == value) {
+        value = nil;
     }
     
     return value;
@@ -425,14 +419,13 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
             if ([self.class instancesRespondToSelector:@selector(tc_setSerializedString:forKey:meta:)]) {
                 [self tc_setSerializedString:str forKey:key meta:meta];
             } else {
-                NSString *msg = [NSString stringWithFormat:@"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_setSerializedString:forKey:meta:)), key];
-                NSLog(@"%@", msg);
-                NSAssert(false, msg);
+                NSAssert(false, @"not response to -[%@], or you can ignore property %@", NSStringFromSelector(@selector(tc_setSerializedString:forKey:meta:)), key);
             }
             return;
         } else if ([value isKindOfClass:NSValue.class]) {
             [self setValue:value forKey:key];
         }
+        
     } else if (kTCEncodingTypeSEL == type) {
         if ((id)kCFNull == value) {
             ((void (*)(id, SEL, SEL))(void *) objc_msgSend)(self, meta->_setter, NULL);
@@ -441,7 +434,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
             if (NULL != sel) {
                 ((void (*)(id, SEL, SEL))(void *) objc_msgSend)(self, meta->_setter, sel);
             }
-        } else {
+        } else if (nil != value) {
             NSCAssert(false, @"property %@ type %@ doesn't match value type %@", key, meta->_typeName, NSStringFromClass([value class]));
         }
         
@@ -452,12 +445,12 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
             [self setValue:NSClassFromString(value) forKey:key];
         } else if ((id)kCFNull == value) {
             [self setValue:Nil forKey:key];
-        } else {
+        } else if (nil != value) {
             NSCAssert(false, @"property %@ type %@ doesn't match value type %@", key, meta->_typeName, NSStringFromClass([value class]));
         }
        
     } else if (nil != value || tc_isObjForInfo(meta->_info)) {
-        [self setValue:(id)kCFNull == value ? nil : value forKey:key];
+        [self setValue:((id)kCFNull == value ? nil : value) forKey:key];
     }
 }
 

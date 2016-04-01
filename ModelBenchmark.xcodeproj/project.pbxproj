@@ -16,6 +16,7 @@
 		B7AC83581BDE3C9000679B78 /* NSObject+TCMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */; };
 		B7AC835F1BDE3C9C00679B78 /* NSObject+YYModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835B1BDE3C9C00679B78 /* NSObject+YYModel.m */; };
 		B7AC83601BDE3C9C00679B78 /* YYClassInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835D1BDE3C9C00679B78 /* YYClassInfo.m */; };
+		B7E543391CAE686D00708EE9 /* UIColor+TCUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */; };
 		D9B193811BAC714D00F93933 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193801BAC714D00F93933 /* main.m */; };
 		D9B193841BAC714D00F93933 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193831BAC714D00F93933 /* AppDelegate.m */; };
 		D9B193871BAC714D00F93933 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193861BAC714D00F93933 /* ViewController.m */; };
@@ -131,6 +132,8 @@
 		B7AC835C1BDE3C9C00679B78 /* YYClassInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYClassInfo.h; sourceTree = "<group>"; };
 		B7AC835D1BDE3C9C00679B78 /* YYClassInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YYClassInfo.m; sourceTree = "<group>"; };
 		B7AC835E1BDE3C9C00679B78 /* YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYModel.h; sourceTree = "<group>"; };
+		B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+TCUtilities.m"; sourceTree = SOURCE_ROOT; };
+		B7E543381CAE686D00708EE9 /* UIColor+TCUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+TCUtilities.h"; sourceTree = SOURCE_ROOT; };
 		D941E9B11BD54ED800A7B905 /* GithubUserObjectMapper.swift.bak */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GithubUserObjectMapper.swift.bak; sourceTree = "<group>"; };
 		D9B1937B1BAC714D00F93933 /* ModelBenchmark.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ModelBenchmark.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9B1937F1BAC714D00F93933 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -314,6 +317,8 @@
 		B7AC83551BDE3C9000679B78 /* TCMapping */ = {
 			isa = PBXGroup;
 			children = (
+				B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */,
+				B7E543381CAE686D00708EE9 /* UIColor+TCUtilities.h */,
 				B70EF9F41CAA8BA700375342 /* TCMappingOption.h */,
 				B70EF9F51CAA8BA700375342 /* TCMappingOption.m */,
 				B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */,
@@ -877,6 +882,7 @@
 				D9EB03F41BD64D1E00B3E0F5 /* JSONModel+networking.m in Sources */,
 				D9EB03F01BD64D1E00B3E0F5 /* JSONModelError.m in Sources */,
 				D9EB03E31BD64D1E00B3E0F5 /* FEMSerializer.m in Sources */,
+				B7E543391CAE686D00708EE9 /* UIColor+TCUtilities.m in Sources */,
 				D9EB03EB1BD64D1E00B3E0F5 /* FEMRepresentationUtility.m in Sources */,
 				D9EB03DD1BD64D1E00B3E0F5 /* FEMRelationshipAssignmentContext.m in Sources */,
 				D9B1947E1BAC737000F93933 /* DateFormatter.m in Sources */,

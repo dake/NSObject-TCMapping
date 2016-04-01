@@ -56,7 +56,7 @@
                 continue;
             }
         } else {
-            value = [self valueForKey:key meta:meta ignoreNSNull:NO];
+            value = [self valueForKey:key meta:meta ignoreNSNull:YES];
         }
         
         if (nil == value) {

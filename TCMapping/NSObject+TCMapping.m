@@ -14,6 +14,7 @@
 #import <UIKit/UIGeometry.h>
 
 #import "TCMappingMeta.h"
+#import "UIColor+TCUtilities.h"
 
 
 #if ! __has_feature(objc_arc)
@@ -133,6 +134,50 @@ NS_INLINE NSValue *mappingNSValueWithString(NSString *value, __unsafe_unretained
     
     NSCAssert(nil != ret, @"property type %@ doesn't match value type %@", meta->_typeName, NSStringFromClass(value.class));
     return ret;
+}
+
+//  UIColor <- {r:0~1, g:0~1, b:0~1, a:0~1}, {rgb:0x322834}, {rgba:0x12345678}, {argb:0x12345678}
+NS_INLINE UIColor *valueForUIColor(NSDictionary *dic, Class klass)
+{
+    static NSString *const rgbKey = @"rgb";
+    static NSString *const rgbaKey = @"rgba";
+    static NSString *const argbKey = @"argb";
+    
+    static NSString *const rKey = @"r";
+    static NSString *const gKey = @"g";
+    static NSString *const bKey = @"b";
+    static NSString *const aKey = @"a";
+    
+    NSArray *keys = dic.allKeys;
+    
+    if ([keys containsObject:rgbKey]) {
+        NSNumber *rgb = [dic valueForKeyExceptNull:rgbKey];
+        return nil != rgb ? RGBHex(rgb.unsignedIntValue) : nil;
+        
+    } else if ([keys containsObject:rgbaKey]) {
+        NSNumber *rgba = [dic valueForKeyExceptNull:rgbaKey];
+        return nil != rgba ? RGBHex(rgba.unsignedIntValue) : nil;
+        
+    } else if ([keys containsObject:argbKey]) {
+        NSNumber *argb = [dic valueForKeyExceptNull:argbKey];
+        return nil != argb ? RGBHex(argb.unsignedIntValue) : nil;
+        
+    } else {
+        NSNumber *r = [dic valueForKeyExceptNull:rKey];
+        NSNumber *g = [dic valueForKeyExceptNull:gKey];
+        NSNumber *b = [dic valueForKeyExceptNull:bKey];
+        NSNumber *a = [dic valueForKeyExceptNull:aKey];
+        
+        if (nil != r ||
+            nil != g ||
+            nil != b ||
+            nil != a) {
+            
+            return [UIColor colorWithRed:r.doubleValue green:g.doubleValue blue:b.doubleValue alpha:nil != a ? a.doubleValue : 1.0f];
+        }
+    }
+    
+    return nil;
 }
 
 NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __unsafe_unretained TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class curClass)
@@ -520,8 +565,8 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                 }
                 if (Nil == klass) {
                     value = nil;
-                } else if (type == kTCEncodingTypeNSDictionary) {
                     
+                } else if (type == kTCEncodingTypeNSDictionary) {
                     __unsafe_unretained Class dicValueClass = classForType(typeDic[propertyName]);
                     if (Nil != dicValueClass) {
                         NSMutableDictionary *tmpDic = [NSMutableDictionary dictionary];
@@ -534,11 +579,15 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                         }
                         
                         value = tmpDic.count > 0 ? [klass dictionaryWithDictionary:tmpDic] : nil;
+                        
                     } else if (valueDataDic.class != klass) {
                         value = [klass dictionaryWithDictionary:valueDataDic];
                     }
+                } else if ([klass isSubclassOfClass:UIColor.class]) {
+                    value = valueForUIColor((NSDictionary *)value, klass);
+                    
                 } else {
-                    value = tc_mappingWithDictionary(valueDataDic, nil, context, nil == obj ? nil : [obj valueForKey:propertyName], klass, NO);
+                    value = tc_mappingWithDictionary(valueDataDic, nil, context, (nil == obj ? nil : [obj valueForKey:propertyName]), klass, NO);
                 }
             } else {
                 value = nil;

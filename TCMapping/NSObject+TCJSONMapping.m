@@ -13,6 +13,7 @@
 #import <UIKit/UIGeometry.h>
 #import "TCMappingMeta.h"
 
+#import "UIColor+TCUtilities.h"
 
 /**
  @brief	Get ISO date formatter.
@@ -112,6 +113,10 @@ static id mappingToJSONObject(id obj)
     } else if ([obj isKindOfClass:NSData.class]) { // -> Base64 string
         return [(NSData *)obj base64EncodedStringWithOptions:0];
         
+    } else if ([obj isKindOfClass:UIColor.class]) { // -> dic
+        UIColor *color = obj;
+        return @{@"r": @(color.red), @"g": @(color.green), @"b": @(color.blue), @"a": @(color.alpha)};
+        
     } else if ([obj isKindOfClass:NSAttributedString.class]) { // -> string
         return ((NSAttributedString *)obj).string;
         
@@ -137,6 +142,9 @@ static id mappingToJSONObject(id obj)
             }
             
             id value = [obj valueForKey:NSStringFromSelector(meta->_getter) meta:meta ignoreNSNull:!isNSNullValid];
+            if (nil == value && isNSNullValid) {
+                value = (id)kCFNull;
+            }
             if (nil != value) {
                 value = mappingToJSONObject(value);
             }

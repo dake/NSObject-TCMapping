@@ -155,7 +155,7 @@ NS_ASSUME_NONNULL_BEGIN
 @public
     NSString *_typeName;
     NSString *_propertyName;
-    Class _typeClass;
+    __unsafe_unretained Class _typeClass;
     TCEncodingInfo _info;
     
     SEL _getter;
@@ -163,8 +163,11 @@ NS_ASSUME_NONNULL_BEGIN
 }
 
 + (BOOL)isNSTypeForClass:(Class)klass;
++ (instancetype)metaForNSClass:(Class)klass;
 
 @end
+
+
 
 extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class klass);
 

@@ -180,7 +180,7 @@ NS_INLINE UIColor *valueForUIColor(NSDictionary *dic, Class klass)
     return nil;
 }
 
-NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __unsafe_unretained TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class curClass)
+NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDictionary *typeMappingDic, __unsafe_unretained Class curClass)
 {
     id ret = nil;
     
@@ -190,7 +190,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
         
         switch (type) {
             case kTCEncodingTypeNSString: { // NSString <- non NSString
-                NSCAssert([value isKindOfClass:NSString.class], @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                NSCAssert([value isKindOfClass:NSString.class], @"property %@ type %@ doesn't match value type %@", meta->_propertyName, meta->_typeName, NSStringFromClass([value class]));
                 if (![value isKindOfClass:NSString.class]) {
                     ret = [klass stringWithFormat:@"%@", value];
                 } else {
@@ -217,7 +217,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                         ret = value;
                     }
                 } else {
-                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                    NSCAssert(false, @"property %@ type %@ doesn't match value type %@", meta->_propertyName, meta->_typeName, NSStringFromClass([value class]));
                     if ([value isKindOfClass:NSString.class]) {
                         if (type == kTCEncodingTypeNSNumber) {
                             ret = [tc_mapping_number_fmter() numberFromString:(NSString *)value];
@@ -232,7 +232,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                 
             case kTCEncodingTypeNSDate: { // NSDate <- NSString
                 if ([value isKindOfClass:NSString.class]) { // NSDate <- NSString
-                    NSString *fmtStr = typeMappingDic[propertyName];
+                    NSString *fmtStr = typeMappingDic[meta->_propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
                         NSDateFormatter *fmt = tc_mapping_date_write_fmter();
                         fmt.timeZone = [curClass tc_mappingOption].dateTimeZone;
@@ -294,7 +294,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     ret = [[klass alloc] initWithString:value];
                 }
                 
-                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", meta->_propertyName, meta->_typeName, NSStringFromClass([value class]));
                 break;
             }
                 
@@ -303,7 +303,7 @@ NS_INLINE id valueForBaseTypeOfPropertyName(NSString *propertyName, id value, __
                     ret = value;
                 }
                 
-                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", propertyName, meta->_typeName, NSStringFromClass([value class]));
+                NSCAssert(nil != ret, @"property %@ type %@ doesn't match value type %@", meta->_propertyName, meta->_typeName, NSStringFromClass([value class]));
                 break;
             }
                 
@@ -346,24 +346,29 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                                    Class curClass,
                                    BOOL useInputNameDicOnly);
 
-static NSArray *mappingArray(NSArray *value, Class klass, id<TCMappingPersistentContext> context)
+static NSArray *mappingArray(NSArray *value, Class klass, id<TCMappingPersistentContext> context, NSString *property, Class curClass)
 {
     NSMutableArray *arry = [NSMutableArray array];
     
+    TCMappingMeta *meta = [TCMappingMeta metaForNSClass:klass];
+    meta->_propertyName =  property;
     for (NSDictionary *dic in value) {
-        if ([dic isKindOfClass:NSDictionary.class]) {
+        if ([dic isKindOfClass:klass]) {
+            [arry addObject:dic];
+        } else if ([dic isKindOfClass:NSDictionary.class]) {
             id obj = tc_mappingWithDictionary(dic, nil, context, nil, klass, NO);
             if (nil != obj) {
                 [arry addObject:obj];
             }
         } else {
-            if ([dic isKindOfClass:klass]) {
-                [arry addObject:dic];
+            id obj = valueForBaseTypeOfProperty(dic, meta, nil, curClass);
+            if (nil != obj) {
+                [arry addObject:obj];
             }
         }
     }
     
-    return arry.count > 0 ? arry.copy : nil;
+    return (value.count > 0 && arry.count < 1) ? nil : arry.copy;
 }
 
 static id databaseInstanceWithValue(NSDictionary *value, NSDictionary *nameDic, id<TCMappingPersistentContext> context, Class klass)
@@ -601,7 +606,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                 } else {
                     __unsafe_unretained Class arrayItemType = classForType(typeDic[propertyName]);
                     if (Nil != arrayItemType) {
-                        value = mappingArray(valueDataArry, arrayItemType, context);
+                        value = mappingArray(valueDataArry, arrayItemType, context, propertyName, curClass);
                     }
                     
                     if (nil != value) {
@@ -616,7 +621,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                 }
             }
         } else if (value != (id)kCFNull) {
-            value = valueForBaseTypeOfPropertyName(propertyName, value, meta, typeDic, curClass);
+            value = valueForBaseTypeOfProperty(value, meta, typeDic, curClass);
         }
         
         if (nil == value) {

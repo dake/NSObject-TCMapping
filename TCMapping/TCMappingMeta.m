@@ -358,10 +358,15 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 + (instancetype)metaForNSClass:(Class)klass
 {
+    TCEncodingType type = typeForNSType(klass);
+    if (kTCEncodingTypeUnknown == type) {
+        return nil;
+    }
+    
     // TODO: cache this
     TCMappingMeta *meta = [[self alloc] init];
     meta->_typeClass = klass;
-    meta->_info = kTCEncodingOptionObj | typeForNSType(klass);
+    meta->_info = kTCEncodingOptionObj | type;
     return meta;
 }
 

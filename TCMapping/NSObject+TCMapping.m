@@ -218,7 +218,7 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
                     }
                 } else {
                     NSCAssert(false, @"property %@ type %@ doesn't match value type %@", meta->_propertyName, meta->_typeName, NSStringFromClass([value class]));
-                    if ([value isKindOfClass:NSString.class]) {
+                    if ([value isKindOfClass:NSString.class] && ((NSString *)value).length > 0) {
                         if (type == kTCEncodingTypeNSNumber) {
                             ret = [tc_mapping_number_fmter() numberFromString:(NSString *)value];
                         } else {
@@ -231,7 +231,7 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
             }
                 
             case kTCEncodingTypeNSDate: { // NSDate <- NSString
-                if ([value isKindOfClass:NSString.class]) { // NSDate <- NSString
+                if ([value isKindOfClass:NSString.class] && ((NSString *)value).length > 0) { // NSDate <- NSString
                     NSString *fmtStr = typeMappingDic[meta->_propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
                         NSDateFormatter *fmt = tc_mapping_date_write_fmter();
@@ -257,7 +257,9 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
                 
             case kTCEncodingTypeNSURL: { // NSURL <- NSString
                 if ([value isKindOfClass:NSString.class]) {
-                    ret = [klass URLWithString:value];
+                    if (((NSString *)value).length > 0) {
+                        ret = [klass URLWithString:value];
+                    }
                 } else if ([value isKindOfClass:NSURL.class]) {
                     ret = value;
                 }
@@ -267,7 +269,9 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
                 
             case kTCEncodingTypeNSData: { // NSData <- Base64 NSString
                 if ([value isKindOfClass:NSString.class]) {
-                    ret = [[klass alloc] initWithBase64EncodedString:value options:0];
+                    if (((NSString *)value).length > 0) {
+                        ret = [[klass alloc] initWithBase64EncodedString:value options:0];
+                    }
                 } else if ([value isKindOfClass:NSData.class]) {
                     if ([value isKindOfClass:klass]) {
                         ret = value;
@@ -290,7 +294,7 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
             case kTCEncodingTypeNSAttributedString: {
                 if ([value isKindOfClass:klass]) {
                     ret = value;
-                } else if ([value isKindOfClass:NSString.class]) {
+                } else if ([value isKindOfClass:NSString.class] && ((NSString *)value).length > 0) {
                     ret = [[klass alloc] initWithString:value];
                 }
                 
@@ -317,7 +321,7 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
         if ([value isKindOfClass:NSValue.class]) {
             tmpValue = value;
         } else if (type != kTCEncodingTypeCommonStruct && type != kTCEncodingTypeBitStruct) {
-            if ([value isKindOfClass:NSString.class]) {
+            if ([value isKindOfClass:NSString.class] && ((NSString *)value).length > 0) {
                 tmpValue = mappingNSValueWithString(value ,meta);
             }
         }
@@ -350,8 +354,7 @@ static NSArray *mappingArray(NSArray *value, Class klass, id<TCMappingPersistent
 {
     NSMutableArray *arry = [NSMutableArray array];
     
-    TCMappingMeta *meta = [TCMappingMeta metaForNSClass:klass];
-    meta->_propertyName =  property;
+    TCMappingMeta *meta = nil;
     for (NSDictionary *dic in value) {
         if ([dic isKindOfClass:klass]) {
             [arry addObject:dic];
@@ -361,6 +364,15 @@ static NSArray *mappingArray(NSArray *value, Class klass, id<TCMappingPersistent
                 [arry addObject:obj];
             }
         } else {
+            if (nil == meta) {
+                meta = [TCMappingMeta metaForNSClass:klass];
+                if (nil == meta) {
+                    break;
+                }
+                
+                meta->_propertyName =  property;
+            }
+
             id obj = valueForBaseTypeOfProperty(dic, meta, nil, curClass);
             if (nil != obj) {
                 [arry addObject:obj];

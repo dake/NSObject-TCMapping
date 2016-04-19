@@ -59,6 +59,9 @@
 @property (nonatomic, strong) NSDictionary<NSString *, NSString *> *propertyNameJSONMapping;
 @property (nonatomic, assign) BOOL shouldJSONMappingNSNull; // ignore output NSNull or not
 
+
+// TODO: hash, equal  ignore
+
 @end
 
 

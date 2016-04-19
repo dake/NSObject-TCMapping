@@ -204,6 +204,8 @@
             return NO;
         } else if ([left isEqual:right]) {
             continue;
+        } else {
+            return NO;
         }
     }
     

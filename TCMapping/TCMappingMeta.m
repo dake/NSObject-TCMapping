@@ -27,7 +27,6 @@
 @end
 
 
-
 NS_INLINE Class NSBlockClass(void)
 {
     static Class cls;
@@ -399,16 +398,20 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     }
     
     id value = nil;
-    if (type == kTCEncodingTypeSEL) {
+    if (kTCEncodingTypeSEL == type) {
         SEL selector = ((SEL (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
         value = NULL != selector ? NSStringFromSelector(selector) : nil;
         
-    } else if (type == kTCEncodingTypeCString) {
+    } else if (kTCEncodingTypeCString == type) {
         char const *cstr = ((char const * (*)(id, SEL))(void *) objc_msgSend)(self, meta->_getter);
         value = NULL != cstr ? @(cstr) : nil;
         
     } else {
         value = [self valueForKey:NSStringFromSelector(meta->_getter)];
+        // FIXME: deal with real kNSNullString, but NSNull
+        if (tc_isObjForInfo(meta->_info) && type != kTCEncodingTypeNSString && [value isKindOfClass:NSString.class] && [value isEqualToString:NSNull.null.description]) {
+            value = (id)kCFNull;
+        }
     }
     
     if (ignoreNSNull && (id)kCFNull == value) {
@@ -418,14 +421,14 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     return value;
 }
 
-- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta
+- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta forPersistent:(BOOL)persistent
 {
     NSParameterAssert(meta);
     NSParameterAssert(key);
     
     TCEncodingType type = tc_typeForInfo(meta->_info);
     
-    if (type == kTCEncodingTypeCString || tc_isTypeNeedSerialization(type)) {
+    if (kTCEncodingTypeCString == type || tc_isTypeNeedSerialization(type)) {
         
         if ((id)kCFNull == value || [value isKindOfClass:NSString.class]) {
             NSString *str = (id)kCFNull == value ? nil : value;
@@ -464,7 +467,10 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
         }
        
     } else if (nil != value || tc_isObjForInfo(meta->_info)) {
-        [self setValue:((id)kCFNull == value ? nil : value) forKey:key];
+        if (persistent && value == (id)kCFNull) {
+            value = NSNull.null.description;
+        }
+        [self setValue:value forKey:key];
     }
 }
 
@@ -485,7 +491,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     } else if (tc_isObjForInfo(meta->_info) || kTCEncodingTypeCommonStruct == type) {
         [copy setValue:[self valueForKey:key] forKey:key];
     } else {
-        [copy setValue:[self valueForKey:key meta:meta ignoreNSNull:NO] forKey:key meta:meta];
+        [copy setValue:[self valueForKey:key meta:meta ignoreNSNull:NO] forKey:key meta:meta forPersistent:NO];
     }
 }
 
@@ -496,12 +502,12 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 - (nullable NSString *)unsafeStringValueForCustomStruct
 {
-    return [self.unsafeDataForCustomStruct base64EncodedStringWithOptions:0];
+    return [self.unsafeDataForCustomStruct base64EncodedStringWithOptions:kNilOptions];
 }
 
 + (nullable instancetype)valueWitUnsafeStringValue:(NSString *)str customStructType:(const char *)type
 {
-    NSData *data = [[NSData alloc] initWithBase64EncodedString:str options:0];
+    NSData *data = [[NSData alloc] initWithBase64EncodedString:str options:kNilOptions];
     return nil != data ? [self valueWitUnsafeData:data customStructType:type] : nil;
 }
 

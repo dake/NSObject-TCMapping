@@ -31,6 +31,16 @@
     return opt;
 }
 
++ (instancetype)optionWithMappingValidate:(BOOL (^)(id obj))validate
+{
+    NSParameterAssert(validate);
+    
+    TCMappingOption *opt = [[self alloc] init];
+    opt.mappingValidate = validate;
+    
+    return opt;
+}
+
 @end
 
 

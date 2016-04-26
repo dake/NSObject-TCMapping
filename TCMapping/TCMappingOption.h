@@ -28,14 +28,20 @@
  */
 @property (nonatomic, strong) NSDictionary<NSString *, id> *propertyForPrimaryKey;
 
-@property (nonatomic, assign) BOOL shouldMappingNSNull; // ignore NSNull or not
 
-@property (nonatomic, strong) NSTimeZone *dateTimeZone; // for time string -> NSDate
+@property (nonatomic, assign) BOOL shouldMappingNSNull; // mapping NSNull -> nil or not
+@property (nonatomic, assign) BOOL emptyDictionaryToNSNull;
 
-@property (nonatomic, copy) NSTimeInterval (^timestampToSecondSince1970)(NSTimeInterval timestamp, BOOL *ignoreReturn);
+
+@property (nonatomic, copy) void (^setupDateFormatter)(SEL property, NSDateFormatter *fmter); // for time string -> NSDate
+@property (nonatomic, copy) NSTimeInterval (^secondSince1970)(SEL property, NSTimeInterval timestamp, BOOL *ignoreReturn);
+
+@property (nonatomic, copy) BOOL (^mappingValidate)(id obj);
+
 
 + (instancetype)optionWithNameMapping:(NSDictionary<NSString *, NSString *> *)nameMapping;
 + (instancetype)optionWithMappingType:(NSDictionary<NSString *, Class> *)mappingType;
++ (instancetype)optionWithMappingValidate:(BOOL (^)(id obj))validate;
 
 
 #pragma mark - TCNSCoding

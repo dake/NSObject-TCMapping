@@ -235,15 +235,20 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
                     NSString *fmtStr = typeMappingDic[meta->_propertyName];
                     if (nil != fmtStr && (id)kCFNull != fmtStr && [fmtStr isKindOfClass:NSString.class] && fmtStr.length > 0) {
                         NSDateFormatter *fmt = tc_mapping_date_write_fmter();
-                        fmt.timeZone = [curClass tc_mappingOption].dateTimeZone;
                         fmt.dateFormat = fmtStr;
+                        if (nil != [curClass tc_mappingOption].setupDateFormatter) {
+                            [curClass tc_mappingOption].setupDateFormatter(NSSelectorFromString(meta->_propertyName), fmt);
+                        }
+                        
                         ret = [fmt dateFromString:value];
+                        fmt.timeZone = nil;
+                        fmt.dateFormat = nil;
                     }
                 } else if ([value isKindOfClass:NSNumber.class]) { // NSDate <- timestamp
                     NSTimeInterval timestamp = ((NSNumber *)value).doubleValue;
                     BOOL ignore = timestamp <= 0;
-                    if (!ignore && nil != [curClass tc_mappingOption].timestampToSecondSince1970) {
-                        timestamp = [curClass tc_mappingOption].timestampToSecondSince1970(timestamp, &ignore);
+                    if (!ignore && nil != [curClass tc_mappingOption].secondSince1970) {
+                        timestamp = [curClass tc_mappingOption].secondSince1970(NSSelectorFromString(meta->_propertyName), timestamp, &ignore);
                     }
                     if (!ignore) {
                         ret = [klass dateWithTimeIntervalSince1970:timestamp];
@@ -270,7 +275,7 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, NSDiction
             case kTCEncodingTypeNSData: { // NSData <- Base64 NSString
                 if ([value isKindOfClass:NSString.class]) {
                     if (((NSString *)value).length > 0) {
-                        ret = [[klass alloc] initWithBase64EncodedString:value options:0];
+                        ret = [[klass alloc] initWithBase64EncodedString:value options:kNilOptions];
                     }
                 } else if ([value isKindOfClass:NSData.class]) {
                     if ([value isKindOfClass:klass]) {
@@ -408,11 +413,6 @@ static id databaseInstanceWithValue(NSDictionary *value, NSDictionary *nameDic, 
 + (TCMappingOption *)tc_mappingOption
 {
     return nil;
-}
-
-- (BOOL)tc_mappingValidate
-{
-    return YES;
 }
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry
@@ -572,9 +572,11 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
         
         
         TCEncodingType type = tc_typeForInfo(meta->_info);
+        BOOL emptyDictionaryToNSNull = [curClass tc_mappingOption].emptyDictionaryToNSNull;
         
         if ([value isKindOfClass:NSDictionary.class]) {
             __unsafe_unretained NSDictionary *valueDataDic = (NSDictionary *)value;
+            
             if (valueDataDic.count > 0) {
                 __unsafe_unretained Class klass = meta->_typeClass;
                 if (Nil == klass) {
@@ -606,9 +608,11 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                 } else {
                     value = tc_mappingWithDictionary(valueDataDic, nil, context, (nil == obj ? nil : [obj valueForKey:propertyName]), klass, NO);
                 }
+                
             } else {
-                value = nil;
+                value = emptyDictionaryToNSNull ? (id)kCFNull : nil;
             }
+            
         } else if ([value isKindOfClass:NSArray.class] || [value isKindOfClass:NSSet.class]) {
             
             NSArray *valueDataArry = [value isKindOfClass:NSArray.class] ? (NSArray *)value : ((NSSet *)value).allObjects;
@@ -632,13 +636,16 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                     }
                 }
             }
+
         } else if (value != (id)kCFNull) {
             value = valueForBaseTypeOfProperty(value, meta, typeDic, curClass);
         }
         
         if (nil == value) {
             continue;
-        } else if (value == (id)kCFNull) {
+        }
+        
+        if (value == (id)kCFNull && !isNSNullValid) {
             value = nil;
         }
         
@@ -650,10 +657,14 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             }
         }
         
-        [obj setValue:value forKey:propertyName meta:meta];
+        [obj setValue:value forKey:propertyName meta:meta forPersistent:NO];
     }
     
-    return obj.tc_mappingValidate ? obj : nil;
+    if (nil == [curClass tc_mappingOption].mappingValidate) {
+        return obj;
+    }
+    
+    return [curClass tc_mappingOption].mappingValidate(obj) ? obj : nil;
 }
 
 
@@ -672,9 +683,6 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
 
 
 #pragma mark - NSString+TC_NSNumber
-
-@interface NSString (TC_NSNumber)
-@end
 
 @implementation NSString (TC_NSNumber)
 

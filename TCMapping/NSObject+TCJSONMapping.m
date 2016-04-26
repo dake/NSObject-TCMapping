@@ -111,7 +111,7 @@ static id mappingToJSONObject(id obj)
         return [tcISODateFormatter() stringFromDate:obj];
         
     } else if ([obj isKindOfClass:NSData.class]) { // -> Base64 string
-        return [(NSData *)obj base64EncodedStringWithOptions:0];
+        return [(NSData *)obj base64EncodedStringWithOptions:kNilOptions];
         
     } else if ([obj isKindOfClass:UIColor.class]) { // -> dic
         UIColor *color = obj;
@@ -180,7 +180,7 @@ static id mappingToJSONObject(id obj)
 - (NSData *)tc_JSONData
 {
     id obj = self.tc_JSONObject;
-    return nil != obj ? [NSJSONSerialization dataWithJSONObject:obj options:0 error:NULL] : nil;
+    return nil != obj ? [NSJSONSerialization dataWithJSONObject:obj options:kNilOptions error:NULL] : nil;
 }
 
 - (NSString *)tc_JSONString
@@ -199,7 +199,7 @@ static id mappingToJSONObject(id obj)
 
 - (id)tc_JSONObject
 {
-    return [NSJSONSerialization JSONObjectWithData:[self dataUsingEncoding:NSUTF8StringEncoding] options:0 error:NULL];
+    return [NSJSONSerialization JSONObjectWithData:[self dataUsingEncoding:NSUTF8StringEncoding] options:kNilOptions error:NULL];
 }
 
 @end
@@ -209,7 +209,7 @@ static id mappingToJSONObject(id obj)
 
 - (id)tc_JSONObject
 {
-    return [NSJSONSerialization JSONObjectWithData:self options:0 error:NULL];
+    return [NSJSONSerialization JSONObjectWithData:self options:kNilOptions error:NULL];
 }
 
 @end

@@ -56,7 +56,7 @@
                 continue;
             }
         } else {
-            value = [self valueForKey:key meta:meta ignoreNSNull:YES];
+            value = [self valueForKey:key meta:meta ignoreNSNull:NO];
         }
         
         if (nil == value) {
@@ -96,7 +96,7 @@
             continue;
         }
         
-        [obj setValue:[coder decodeObjectForKey:mapKey] forKey:key meta:meta];
+        [obj setValue:[coder decodeObjectForKey:mapKey] forKey:key meta:meta forPersistent:NO];
     }
     
     return obj;

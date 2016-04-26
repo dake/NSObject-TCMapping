@@ -50,8 +50,6 @@
 - (void)tc_mappingWithDictionary:(NSDictionary *)dic;
 - (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameDic;
 
-- (BOOL)tc_mappingValidate;
-
 
 #pragma mark - async
 

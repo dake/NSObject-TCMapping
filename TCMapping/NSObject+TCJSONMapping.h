@@ -12,6 +12,17 @@
 
 @protocol TCJSONMappingIgnore; // unavailable for `Class`
 
+/**
+ @brief	
+ 
+ UIColor -> "{r:0~1, g:0~1, b:0~1, a:0~1}"
+ NSData -> base64 string
+ NSDate -> "yyyy-MM-dd'T'HH:mm:ssZ"
+ NSURL -> string
+ NSAttributedString -> string
+ SEL -> string
+ 
+ */
 @interface NSObject (TCJSONMapping)
 
 + (TCMappingOption *)tc_mappingOption;

@@ -12,6 +12,10 @@
 
 @protocol NSCodingIgnore; // unavailable for `Class`
 
+/**
+ @brief	NSNull -> "<null>"
+ */
+
 @interface NSObject (TCNSCoding)
 
 + (TCMappingOption *)tc_mappingOption;

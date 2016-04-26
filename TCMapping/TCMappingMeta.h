@@ -203,7 +203,7 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
  */
 
 - (id)valueForKey:(NSString *)key meta:(TCMappingMeta *)meta ignoreNSNull:(BOOL)ignoreNSNull;
-- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta;
+- (void)setValue:(nullable id)value forKey:(NSString *)key meta:(TCMappingMeta *)meta forPersistent:(BOOL)persistent;
 - (void)copy:(id)copy forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 
 @end

@@ -15,32 +15,32 @@
 /**
  @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *propertyNameMapping;
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameMapping;
 
 /**
  @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, Class> *propertyMappingType;
+@property (nonatomic, strong) NSDictionary<NSString *, Class> *typeMapping;
 
 /**
  @brief	format: @{@"primaryKey1": @"value", @"primaryKey2": NSNull.null}
  NSNull.null will be replace with an exact value while mapping.
  */
-@property (nonatomic, strong) NSDictionary<NSString *, id> *propertyForPrimaryKey;
+@property (nonatomic, strong) NSDictionary<NSString *, id> *primaryKey;
 
 
 @property (nonatomic, assign) BOOL shouldMappingNSNull; // mapping NSNull -> nil or not
-@property (nonatomic, assign) BOOL emptyDictionaryToNSNull;
+@property (nonatomic, assign) BOOL emptyDictionaryToNSNull; // mapping {} -> NSNull
 
 
-@property (nonatomic, copy) void (^setupDateFormatter)(SEL property, NSDateFormatter *fmter); // for time string -> NSDate
+@property (nonatomic, copy) void (^setUpDateFormatter)(SEL property, NSDateFormatter *fmter); // for time string -> NSDate
 @property (nonatomic, copy) NSTimeInterval (^secondSince1970)(SEL property, NSTimeInterval timestamp, BOOL *ignoreReturn);
 
 @property (nonatomic, copy) BOOL (^mappingValidate)(id obj);
 
 
 + (instancetype)optionWithNameMapping:(NSDictionary<NSString *, NSString *> *)nameMapping;
-+ (instancetype)optionWithMappingType:(NSDictionary<NSString *, Class> *)mappingType;
++ (instancetype)optionWithTypeMapping:(NSDictionary<NSString *, Class> *)typeMapping;
 + (instancetype)optionWithMappingValidate:(BOOL (^)(id obj))validate;
 
 
@@ -49,12 +49,12 @@
 /**
  @brief	format: @{@"propertyName": @"coding key" or NSNull.null for ignore"}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *propertyNSCodingMapping;
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameNSCodingMapping;
 
 
 #pragma mark - TCNSCopying
 
-@property (nonatomic, strong) NSArray<NSString *> *propertyCopyIgnore;
+@property (nonatomic, strong) NSArray<NSString *> *nameCopyIgnore;
 
 
 #pragma mark - TCJSONMapping
@@ -62,7 +62,7 @@
 /**
  @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *propertyNameJSONMapping;
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameJSONMapping;
 @property (nonatomic, assign) BOOL shouldJSONMappingNSNull; // ignore output NSNull or not
 
 

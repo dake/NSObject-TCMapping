@@ -16,17 +16,17 @@
     NSParameterAssert(nameMapping);
     
     TCMappingOption *opt = [[self alloc] init];
-    opt.propertyNameMapping = nameMapping;
+    opt.nameMapping = nameMapping;
     
     return opt;
 }
 
-+ (instancetype)optionWithMappingType:(NSDictionary<NSString *, id> *)mappingType
++ (instancetype)optionWithTypeMapping:(NSDictionary<NSString *, Class> *)typeMapping
 {
-    NSParameterAssert(mappingType);
+    NSParameterAssert(typeMapping);
     
     TCMappingOption *opt = [[self alloc] init];
-    opt.propertyMappingType = mappingType;
+    opt.typeMapping = typeMapping;
     
     return opt;
 }

@@ -161,9 +161,9 @@
                                                        @"picInfos" : @"pic_infos",
                                                        @"inReplyToUserId" : @"in_reply_to_user_id"}];
         
-        opt.propertyMappingType = @{@"picIds" : [NSString class],
-                                    @"picInfos" : [TCWeiboPicture class],
-                                    @"urlStruct" : [TCWeiboURL class]};
+        opt.typeMapping = @{@"picIds" : [NSString class],
+                            @"picInfos" : [TCWeiboPicture class],
+                            @"urlStruct" : [TCWeiboURL class]};
     }
     
     return opt;

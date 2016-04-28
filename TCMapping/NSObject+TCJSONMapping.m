@@ -128,7 +128,7 @@ static id mappingToJSONObject(id obj)
         
     } else { // user defined class
         BOOL isNSNullValid = [[obj class] tc_mappingOption].shouldJSONMappingNSNull;
-        NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_mappingOption].propertyNameJSONMapping;
+        NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_mappingOption].nameJSONMapping;
         __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass([obj class]);
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         

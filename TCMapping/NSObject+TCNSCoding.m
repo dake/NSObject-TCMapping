@@ -27,7 +27,7 @@
         return;
     }
     
-    NSDictionary *nameMapping = self.class.tc_mappingOption.propertyNSCodingMapping;
+    NSDictionary *nameMapping = self.class.tc_mappingOption.nameNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
@@ -82,7 +82,7 @@
         return nil;
     }
     
-    NSDictionary *nameMapping = self.class.tc_mappingOption.propertyNSCodingMapping;
+    NSDictionary *nameMapping = self.class.tc_mappingOption.nameNSCodingMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
@@ -123,7 +123,7 @@
     
     typeof(self) copy = [[self.class alloc] init];
     
-    NSArray<NSString *> *ignoreList = self.class.tc_mappingOption.propertyCopyIgnore;
+    NSArray<NSString *> *ignoreList = self.class.tc_mappingOption.nameCopyIgnore;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];

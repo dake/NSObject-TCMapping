@@ -88,7 +88,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     static TCMappingOption *opt = nil;
     if (nil == opt) {
         opt = [[TCMappingOption alloc] init];
-        opt.propertyMappingType = @{PropertySTR(model): @"TestModel2"};
+        opt.typeMapping = @{PropertySTR(model): @"TestModel2"};
         opt.shouldJSONMappingNSNull = YES;
     }
     
@@ -186,7 +186,7 @@ typedef NS_ENUM(NSInteger, TestEnume) {
     static TCMappingOption *opt = nil;
     if (nil == opt) {
         opt = [[TCMappingOption alloc] init];
-        opt.propertyNSCodingMapping = @{PropertySTR(klass): NSNull.null};
+        opt.nameNSCodingMapping = @{PropertySTR(klass): NSNull.null};
     }
     
     return opt;

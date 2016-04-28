@@ -41,26 +41,34 @@
 
 + (TCMappingOption *)tc_mappingOption;
 
+
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry;
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context;
 
-+ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic;
-+ (instancetype)tc_mappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context;
++ (instancetype)tc_mappingWithDictionary:(NSDictionary<NSString *, id> *)dic;
++ (instancetype)tc_mappingWithDictionary:(NSDictionary<NSString *, id> *)dic context:(id<TCMappingPersistentContext>)context;
 
-- (void)tc_mappingWithDictionary:(NSDictionary *)dic;
-- (void)tc_mappingWithDictionary:(NSDictionary *)dic propertyNameMapping:(NSDictionary *)extraNameDic;
+- (void)tc_mappingWithDictionary:(NSDictionary<NSString *, id> *)dic;
+
+- (void)tc_mappingWithDictionary:(NSDictionary<NSString *, id> *)dic option:(TCMappingOption *)option;
+
+
+#pragma mark - JSON file
+
++ (instancetype)tc_mappingWithDictionaryOfJSONFile:(NSString *)path error:(NSError **)error;
++ (NSMutableArray *)tc_mappingWithArrayOfJSONFile:(NSString *)path error:(NSError **)error;
 
 
 #pragma mark - async
 
 + (void)tc_asyncMappingWithArray:(NSArray *)arry finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary<NSString *, id> *)dic finish:(void(^)(id data))finish;
 
 + (void)tc_asyncMappingWithArray:(NSArray *)arry inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary<NSString *, id> *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
 + (void)tc_asyncMappingWithArray:(NSArray *)arry context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(NSMutableArray *dataList))finish;
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
++ (void)tc_asyncMappingWithDictionary:(NSDictionary<NSString *, id> *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish;
 
 
 @end

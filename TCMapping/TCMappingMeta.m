@@ -12,6 +12,7 @@
 
 #import <CoreGraphics/CGGeometry.h>
 #import <UIKit/UIGeometry.h>
+#import <UIKit/UIColor.h>
 
 
 @protocol TCMappingIgnore
@@ -27,7 +28,7 @@
 @end
 
 
-NS_INLINE Class NSBlockClass(void)
+static Class NSBlockClass(void)
 {
     static Class cls;
     static dispatch_once_t onceToken;
@@ -154,6 +155,8 @@ NS_INLINE TCEncodingType typeForNSType(Class typeClass)
         return kTCEncodingTypeNSNull;
     } else if ([typeClass isSubclassOfClass:NSAttributedString.class]) {
         return kTCEncodingTypeNSAttributedString;
+    } else if ([typeClass isSubclassOfClass:UIColor.class]) {
+        return kTCEncodingTypeUIColor;
     }
     
     return kTCEncodingTypeUnknown;
@@ -180,8 +183,13 @@ NS_INLINE TCEncodingIgnore ignoreForProtocols(NSString *ignoreProtocol)
     return ignore;
 }
 
-static TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
+static TCMappingMeta *metaForProperty(objc_property_t property, Class klass, NSArray<NSString *> *ignoreProps)
 {
+    NSString *propertyName = @(property_getName(property));
+    if (nil == propertyName || [ignoreProps containsObject:propertyName]) {
+        return nil;
+    }
+    
     unsigned int attrCount = 0;
     objc_property_attribute_t *attrs = property_copyAttributeList(property, &attrCount);
     
@@ -202,10 +210,12 @@ static TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
                     if (len == 1) {
                         typeName = @(value);
                         info |= kTCEncodingTypeId;
+                        
                     } else if (len == 2 && value[1] == '?') {
                         typeClass = NSBlockClass();
                         typeName = NSStringFromClass(typeClass);
                         info |= kTCEncodingTypeBlock;
+                        
                     } else {
                         char mutableValue[len - 2];
                         strcpy(mutableValue, value + 2);
@@ -269,11 +279,6 @@ static TCMappingMeta *metaForProperty(objc_property_t property, Class klass)
         return nil;
     }
     
-    NSString *propertyName = @(property_getName(property));
-    if (nil == propertyName) {
-        return nil;
-    }
-    
     TCMappingMeta *meta = [[TCMappingMeta alloc] init];
     meta->_propertyName = propertyName;
     meta->_typeName = typeName;
@@ -310,12 +315,19 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     
     static NSRecursiveLock *s_recursiveLock;
     static NSMutableDictionary<NSString *, NSMutableDictionary *> *s_propertyByClass;
+    static NSArray<NSString *> *s_sysProps;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         s_propertyByClass = [NSMutableDictionary dictionary];
         s_recursiveLock = [[NSRecursiveLock alloc] init];
         s_recursiveLock.name = @"recursiveLock.TCMappingMeta.TCKit";
+        
+        s_sysProps = @[
+                       NSStringFromSelector(@selector(description)),
+                       NSStringFromSelector(@selector(debugDescription)),
+                       NSStringFromSelector(@selector(hash)),
+                       NSStringFromSelector(@selector(superclass))];
     });
     
     
@@ -333,7 +345,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     objc_property_t *properties = class_copyPropertyList(klass, &num);
     
     for (unsigned int i = 0; i < num; ++i) {
-        TCMappingMeta *meta = metaForProperty(properties[i], klass);
+        TCMappingMeta *meta = metaForProperty(properties[i], klass, s_sysProps);
         if (nil != meta) {
             propertyNames[meta->_propertyName] = meta;
         }
@@ -350,9 +362,19 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 @implementation TCMappingMeta
 
++ (BOOL)isBlock:(id)obj
+{
+    return [[obj class] isSubclassOfClass:NSBlockClass()];
+}
+
 + (BOOL)isNSTypeForClass:(Class)klass
 {
     return typeForNSType(klass) != kTCEncodingTypeUnknown;
+}
+
++ (TCEncodingType)typeForNSClass:(Class)klass
+{
+    return typeForNSType(klass);
 }
 
 + (instancetype)metaForNSClass:(Class)klass
@@ -507,7 +529,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
 
 + (nullable instancetype)valueWitUnsafeStringValue:(NSString *)str customStructType:(const char *)type
 {
-    NSData *data = [[NSData alloc] initWithBase64EncodedString:str options:kNilOptions];
+    NSData *data = [[NSData alloc] initWithBase64EncodedString:str options:NSDataBase64DecodingIgnoreUnknownCharacters];
     return nil != data ? [self valueWitUnsafeData:data customStructType:type] : nil;
 }
 

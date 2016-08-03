@@ -7,8 +7,14 @@
 //
 
 #import "TCMappingOption.h"
+#import "NSObject+TCNSCoding.h"
 
 @implementation TCMappingOption
+
+- (instancetype)copyWithZone:(NSZone *)zone
+{
+    return self.tc_copy;
+}
 
 
 + (instancetype)optionWithNameMapping:(NSDictionary<NSString *, NSString *> *)nameMapping

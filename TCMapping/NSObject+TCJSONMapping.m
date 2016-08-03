@@ -60,7 +60,7 @@ NS_INLINE NSString *mappingForNSValue(NSValue *value)
     return nil;
 }
 
-static id mappingToJSONObject(id obj)
+static id mappingToJSONObject(NSObject *obj)
 {
     if (nil == obj ||
         obj == (id)kCFNull ||
@@ -80,7 +80,7 @@ static id mappingToJSONObject(id obj)
             if (strKey.length < 1) {
                 continue;
             }
-            id value = mappingToJSONObject((NSDictionary *)obj[key]);
+            id value = mappingToJSONObject(((NSDictionary *)obj)[key]);
             if (nil != value) {
                 dic[strKey] = value;
             }
@@ -108,29 +108,33 @@ static id mappingToJSONObject(id obj)
         return ((NSURL *)obj).absoluteString;
         
     } else if ([obj isKindOfClass:NSDate.class]) { // -> string
-        return [tcISODateFormatter() stringFromDate:obj];
+        return [tcISODateFormatter() stringFromDate:(NSDate *)obj];
         
     } else if ([obj isKindOfClass:NSData.class]) { // -> Base64 string
         return [(NSData *)obj base64EncodedStringWithOptions:kNilOptions];
         
-    } else if ([obj isKindOfClass:UIColor.class]) { // -> dic
-        UIColor *color = obj;
-        return @{@"r": @(color.red), @"g": @(color.green), @"b": @(color.blue), @"a": @(color.alpha)};
+    } else if ([obj isKindOfClass:UIColor.class]) { // -> string
+        UIColor *color = (UIColor *)obj;
+        NSString *str = color.argbHexStringValue;
+        if (nil == str) {
+            return nil;
+        }
+        return [@"#" stringByAppendingString:str];
         
     } else if ([obj isKindOfClass:NSAttributedString.class]) { // -> string
         return ((NSAttributedString *)obj).string;
         
     } else if ([obj isKindOfClass:NSValue.class]) { // -> Base64 string
-        return mappingForNSValue(obj);
+        return mappingForNSValue((NSValue *)obj);
         
     } else if (class_isMetaClass(object_getClass(obj))) { // -> string
-        return NSStringFromClass(obj);
+        return NSStringFromClass((Class)obj);
         
     } else { // user defined class
-        BOOL isNSNullValid = [[obj class] tc_mappingOption].shouldJSONMappingNSNull;
-        NSDictionary<NSString *, NSString *> *nameDic = [[obj class] tc_mappingOption].nameJSONMapping;
-        __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass([obj class]);
-        NSMutableDictionary *dic = [NSMutableDictionary dictionary];
+        BOOL isNSNullValid = [obj.class tc_mappingOption].shouldJSONMappingNSNull;
+        NSDictionary<NSString *, NSString *> *nameDic = [obj.class tc_mappingOption].nameJSONMapping;
+        __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(obj.class);
+        NSMutableDictionary *dic = NSMutableDictionary.dictionary;
         
         for (NSString *key in metaDic) {
             __unsafe_unretained TCMappingMeta *meta = metaDic[key];

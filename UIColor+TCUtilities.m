@@ -1265,7 +1265,7 @@ void tcHSPtoRGB(
     return result;
 }
 
-- (NSString *)hexStringValue
+- (NSString *)rgbaHexStringValue
 {
     NSAssert(self.canProvideRGBComponents, @"Must be an RGB color to use -hexStringValue");
     NSString *result = nil;
@@ -1282,10 +1282,27 @@ void tcHSPtoRGB(
     return result;
 }
 
+- (NSString *)argbHexStringValue
+{
+    NSAssert(self.canProvideRGBComponents, @"Must be an RGB color to use -hexStringValue");
+    NSString *result = nil;
+    switch (self.colorSpaceModel) {
+        case kCGColorSpaceModelRGB:
+            result = [NSString stringWithFormat:@"%02X%02X%02X%02X", self.alphaByte, self.redByte, self.greenByte, self.blueByte];
+            break;
+        case kCGColorSpaceModelMonochrome:
+            result = [NSString stringWithFormat:@"%02X%02X%02X%02X", self.alphaByte, self.whiteByte, self.whiteByte, self.whiteByte];
+            break;
+        default:
+            break;
+    }
+    return result;
+}
+
 - (NSString *)valueString
 {
     return [NSString stringWithFormat:@"%@ [%d %d %d]: RGB:(%f, %f, %f) HSB:(%f, %f, %f) CMYK:(%@) alpha: %f",
-            self.hexStringValue,
+            self.rgbaHexStringValue,
             self.redByte, self.greenByte, self.blueByte,
             self.red, self.green, self.blue,
             self.hue, self.saturation, self.brightness,
@@ -1441,7 +1458,7 @@ static NSDictionary *s_kelvin = nil;
     
     for (NSInteger i = 1000; i <= 40000; i += 100) {
         UIColor *color = [UIColor colorWithKelvin:i];
-        NSString *hex = color.hexStringValue;
+        NSString *hex = color.rgbaHexStringValue;
         if (nil != hex && nil == dict[hex]) {
             dict[hex] = @(i);
         }
@@ -1472,19 +1489,41 @@ static NSDictionary *s_kelvin = nil;
     return temp.doubleValue;
 }
 
+
++ (BOOL)parseHexString:(NSString *)stringToConvert inHex:(uint32_t *)hex
+{
+    if (NULL == hex) {
+        return NO;
+    }
+    
+    NSString *string = stringToConvert.lowercaseString;
+    if ([string hasPrefix:@"#"]) {
+        string = [string substringFromIndex:1];
+    }
+    
+    if (![string hasPrefix:@"0x"]) {
+        string = [@"0x" stringByAppendingString:string];
+    }
+    
+    NSScanner *scanner = [NSScanner scannerWithString:string];
+    
+    unsigned int hexNum = 0;
+    if (![scanner scanHexInt:&hexNum]) {
+        return NO;
+    }
+    
+    *hex = hexNum;
+    
+    return YES;
+}
+
 // Returns a UIColor by scanning the string for a hex number and passing that to +[UIColor colorWithRGBHex:]
 // Skips any leading whitespace and ignores any trailing characters
 // Added "#" consumer -- via Arnaud Coomans
 + (instancetype)colorWithRGBHexString:(NSString *)stringToConvert
 {
-    NSString *string = stringToConvert;
-    if ([string hasPrefix:@"#"]) {
-        string = [string substringFromIndex:1];
-    }
-    
-    NSScanner *scanner = [NSScanner scannerWithString:string];
-    unsigned int hexNum = 0;
-    if (![scanner scanHexInt:&hexNum]) {
+    uint32_t hexNum = 0;
+    if (![self parseHexString:stringToConvert inHex:&hexNum]) {
         return nil;
     }
     return [UIColor colorWithRGBHex:hexNum];
@@ -1492,17 +1531,20 @@ static NSDictionary *s_kelvin = nil;
 
 + (instancetype)colorWithARGBHexString:(NSString *)stringToConvert
 {
-    NSString *string = stringToConvert;
-    if ([string hasPrefix:@"#"]) {
-        string = [string substringFromIndex:1];
-    }
-    
-    NSScanner *scanner = [NSScanner scannerWithString:string];
-    unsigned int hexNum = 0;
-    if (![scanner scanHexInt:&hexNum]) {
+    uint32_t hexNum = 0;
+    if (![self parseHexString:stringToConvert inHex:&hexNum]) {
         return nil;
     }
     return [UIColor colorWithARGBHex:hexNum];
+}
+
++ (instancetype)colorWithRGBAHexString:(NSString *)stringToConvert
+{
+    uint32_t hexNum = 0;
+    if (![self parseHexString:stringToConvert inHex:&hexNum]) {
+        return nil;
+    }
+    return [UIColor colorWithRGBAHex:hexNum];
 }
 
 

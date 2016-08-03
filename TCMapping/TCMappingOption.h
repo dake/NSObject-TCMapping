@@ -8,7 +8,9 @@
 
 #import <Foundation/Foundation.h>
 
-@interface TCMappingOption : NSObject
+typedef Class (^TCTypeMappingBlock)(id value);
+
+@interface TCMappingOption : NSObject <NSCopying>
 
 #pragma mark - TCMapping
 
@@ -18,7 +20,7 @@
 @property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameMapping;
 
 /**
- @brief	format: @{@"propertyName": @"object'class name or Class, or yyyy-MM-dd...(-> NSDate)"}
+ @brief	format: @{@"propertyName": @"object'class name or Class or `TCTypeMappingBlock`, or yyyy-MM-dd...(-> NSDate)"}
  */
 @property (nonatomic, strong) NSDictionary<NSString *, Class> *typeMapping;
 
@@ -37,6 +39,8 @@
 @property (nonatomic, copy) NSTimeInterval (^secondSince1970)(SEL property, NSTimeInterval timestamp, BOOL *ignoreReturn);
 
 @property (nonatomic, copy) BOOL (^mappingValidate)(id obj);
+
+@property (nonatomic, assign) BOOL ignoreTypeConsistency;
 
 
 + (instancetype)optionWithNameMapping:(NSDictionary<NSString *, NSString *> *)nameMapping;
@@ -67,6 +71,14 @@
 
 
 // TODO: hash, equal  ignore
+
+
+#pragma mark - TCDictionaryMapping
+/**
+ @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
+ */
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameDictionaryMapping;
+
 
 @end
 

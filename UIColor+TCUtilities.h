@@ -185,16 +185,19 @@ extern void tcHSPtoRGB(CGFloat  H, CGFloat  S, CGFloat  P, CGFloat *R, CGFloat *
 #pragma mark - Strings
 // String support
 @property (nonatomic, readonly) NSString *stringValue;
-@property (nonatomic, readonly) NSString *hexStringValue;
+// "12345FE8"
+@property (nonatomic, readonly) NSString *rgbaHexStringValue;
+@property (nonatomic, readonly) NSString *argbHexStringValue;
 @property (nonatomic, readonly) NSString *valueString;
 // {r, g, b, a} --> {0.3, 1, 0.5, 1}
 + (instancetype)colorWithString:(NSString *)string;
-// "0x65ce00" or "#0x65ce00"
+// "0x65ce00" or "#0x65ce00" or "0x65ce00" or "#0x65ce00"
 + (instancetype)colorWithRGBHexString:(NSString *)stringToConvert;
 + (instancetype)colorWithRGBHex:(uint32_t)hex;
 
-// "0xff65ce00" or "#0xff65ce00"
+// "0xff65ce00" or "#0xff65ce00" or "ff65ce00" or "#ff65ce00"
 + (instancetype)colorWithARGBHexString:(NSString *)stringToConvert;
++ (instancetype)colorWithRGBAHexString:(NSString *)stringToConvert;
 + (instancetype)colorWithARGBHex:(uint32_t)hex;
 + (instancetype)colorWithRGBAHex:(uint32_t)hex;
 

@@ -7,7 +7,7 @@
 //
 
 #import "TCWeiboModel.h"
-#import "NSObject+TCNSCoding.h"
+#import "NSObject+TCPersistent.h"
 
 @implementation TCWeiboPictureMetadata
 

@@ -9,6 +9,14 @@
 #import <Foundation/Foundation.h>
 
 
+typedef NS_ENUM(NSUInteger, TCEncodingInfo) {
+    kTCEncodingInfoUnknown = 0,
+    
+    kTCEncodingTypeMask = 0xff,
+    kTCEncodingOptionMask = 0xf00,
+    kTCEncodingIgnoreMask = 0xf000,
+};
+
 typedef NS_ENUM (uint8_t, TCEncodingType) {
     kTCEncodingTypeUnknown = 0,
     
@@ -27,6 +35,7 @@ typedef NS_ENUM (uint8_t, TCEncodingType) {
     kTCEncodingTypeNSNull,
     kTCEncodingTypeNSAttributedString,
     kTCEncodingTypeUIColor,
+    kTCEncodingTypeUIImage,
     
     // no class obj type
     kTCEncodingTypeId,
@@ -75,24 +84,18 @@ typedef NS_ENUM (uint8_t, TCEncodingType) {
 
 // 4 bit, [0, 15] << 8
 typedef NS_OPTIONS (uint16_t, TCEncodingOption) {
-    kTCEncodingOptionObj = 1 << 8,
-    kTCEncodingOptionStruct = 2 << 8,
+    kTCEncodingOptionShift = __builtin_ctzll(kTCEncodingOptionMask),
+    kTCEncodingOptionObj = 1 << kTCEncodingOptionShift,
+    kTCEncodingOptionStruct = 2 << kTCEncodingOptionShift,
 };
 
 // 4 bit, [0, 15] << 12
 typedef NS_OPTIONS (uint16_t, TCEncodingIgnore) {
-    kTCEncodingIgnoreMapping = (1<<0) << 12,
-    kTCEncodingIgnoreJSONMapping = (1<<1) << 12,
-    kTCEncodingIgnoreNSCoding = (1<<2) << 12,
-    kTCEncodingIgnoreCopying = (1<<3) << 12,
-};
-
-typedef NS_ENUM(NSUInteger, TCEncodingInfo) {
-    kTCEncodingInfoUnknown = 0,
-    
-    kTCEncodingTypeMask = 0xff,
-    kTCEncodingOptionMask = 0xf00,
-    kTCEncodingIgnoreMask = 0xf000,
+    kTCEncodingIgnoreShift = __builtin_ctzll(kTCEncodingIgnoreMask),
+    kTCEncodingIgnoreMapping = (1<<0) << kTCEncodingIgnoreShift,
+    kTCEncodingIgnoreCoding = (1<<1) << kTCEncodingIgnoreShift,
+    kTCEncodingIgnorePersistent = (1<<2) << kTCEncodingIgnoreShift,
+    kTCEncodingIgnoreCopying = (1<<3) << kTCEncodingIgnoreShift,
 };
 
 
@@ -101,14 +104,14 @@ NS_INLINE BOOL tc_ignoreMappingForInfo(TCEncodingInfo info)
     return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreMapping) == kTCEncodingIgnoreMapping;
 }
 
-NS_INLINE BOOL tc_ignoreJSONMappingForInfo(TCEncodingInfo info)
+NS_INLINE BOOL tc_ignoreCodingForInfo(TCEncodingInfo info)
 {
-    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreJSONMapping) == kTCEncodingIgnoreJSONMapping;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreCoding) == kTCEncodingIgnoreCoding;
 }
 
-NS_INLINE BOOL tc_ignoreNSCodingForInfo(TCEncodingInfo info)
+NS_INLINE BOOL tc_ignorePersistentForInfo(TCEncodingInfo info)
 {
-    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnoreNSCoding) == kTCEncodingIgnoreNSCoding;
+    return ((info & kTCEncodingIgnoreMask) & kTCEncodingIgnorePersistent) == kTCEncodingIgnorePersistent;
 }
 
 NS_INLINE BOOL tc_ignoreCopyingForInfo(TCEncodingInfo info)
@@ -191,6 +194,20 @@ extern NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Cl
  */
 - (void)tc_setSerializedString:(nullable NSString *)str forKey:(NSString *)key meta:(TCMappingMeta *)meta;
 
+@end
+
+
+
+@protocol TCMappingIgnore
+@end
+
+@protocol TCCodingIgnore
+@end
+
+@protocol TCPersistentIgnore
+@end
+
+@protocol NSCopyingIgnore
 @end
 
 

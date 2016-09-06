@@ -17,7 +17,7 @@
 #import "MJWeiboModel.h"
 #import "TCWeiboModel.h"
 
-#import "NSObject+TCJSONMapping.h"
+#import "NSObject+TCCoding.h"
 
 //#import "ModelBenchmark-Swift.h"
 

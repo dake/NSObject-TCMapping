@@ -1,5 +1,5 @@
 //
-//  NSObject+TCNSCoding.h
+//  NSObject+TCPersistent.h
 //  TCKit
 //
 //  Created by dake on 16/3/2.
@@ -10,15 +10,17 @@
 #import "TCMappingOption.h"
 
 
-@protocol NSCodingIgnore; // unavailable for `Class`
+@protocol TCPersistentIgnore; // unavailable for `Class`
 
 /**
  @brief	NSNull -> "<null>"
+ 
+ NSPropertyListSerialization, NSCoding: NSData, NSString, NSArray, NSDictionary, NSDate, NSNumber.
+ key for NSDictionary must be NSString
+ 
  */
 
-@interface NSObject (TCNSCoding)
-
-+ (TCMappingOption *)tc_mappingOption;
+@interface NSObject (TCPersistent) <TCMappingOption>
 
 // - (void)encodeWithCoder:(NSCoder *)aCoder { [self tc_encodeWithCoder:aCoder]; }
 - (void)tc_encodeWithCoder:(NSCoder *)coder;
@@ -34,9 +36,7 @@
 
 @protocol NSCopyingIgnore; // unavailable for `Class`
 
-@interface NSObject (TCNSCopying)
-
-+ (TCMappingOption *)tc_mappingOption;
+@interface NSObject (TCNSCopying) <TCMappingOption>
 
 // - (instancetype)copyWithZone:(NSZone *)zone { return self.tc_copy; }
 - (instancetype)tc_copy;

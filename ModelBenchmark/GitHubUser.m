@@ -8,7 +8,7 @@
 
 #import "GitHubUser.h"
 #import "DateFormatter.h"
-#import "NSObject+TCNSCoding.h"
+#import "NSObject+TCPersistent.h"
 
 
 @implementation GHUser

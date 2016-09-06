@@ -15,22 +15,9 @@
 #import <UIKit/UIColor.h>
 
 
-@protocol TCMappingIgnore
-@end
-
-@protocol TCJSONMappingIgnore
-@end
-
-@protocol NSCodingIgnore
-@end
-
-@protocol NSCopyingIgnore
-@end
-
-
 static Class NSBlockClass(void)
 {
-    static Class cls;
+    static Class cls = Nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         void (^block)(void) = ^{};
@@ -157,6 +144,8 @@ NS_INLINE TCEncodingType typeForNSType(Class typeClass)
         return kTCEncodingTypeNSAttributedString;
     } else if ([typeClass isSubclassOfClass:UIColor.class]) {
         return kTCEncodingTypeUIColor;
+    } else if ([typeClass isSubclassOfClass:UIImage.class]) {
+        return kTCEncodingTypeUIImage;
     }
     
     return kTCEncodingTypeUnknown;
@@ -170,11 +159,11 @@ NS_INLINE TCEncodingIgnore ignoreForProtocols(NSString *ignoreProtocol)
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCMappingIgnore))].location != NSNotFound) {
         ignore |= kTCEncodingIgnoreMapping;
     }
-    if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCJSONMappingIgnore))].location != NSNotFound) {
-        ignore |= kTCEncodingIgnoreJSONMapping;
+    if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCCodingIgnore))].location != NSNotFound) {
+        ignore |= kTCEncodingIgnoreCoding;
     }
-    if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(NSCodingIgnore))].location != NSNotFound) {
-        ignore |= kTCEncodingIgnoreNSCoding;
+    if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(TCPersistentIgnore))].location != NSNotFound) {
+        ignore |= kTCEncodingIgnorePersistent;
     }
     if ([ignoreProtocol rangeOfString:NSStringFromProtocol(@protocol(NSCopyingIgnore))].location != NSNotFound) {
         ignore |= kTCEncodingIgnoreCopying;
@@ -223,14 +212,15 @@ static TCMappingMeta *metaForProperty(objc_property_t property, Class klass, NSA
                         typeName = @(mutableValue);
                         
                         if (value[len - 2] == '>') { // "@\"TestModel2<TCMappingIgnore><TCNSCodingIgnore>\"
-                            NSRange range = [typeName rangeOfString:@"<"];
-                            if (range.location != NSNotFound) {
+                            NSRange const r1 = [typeName rangeOfString:@"<"];
+                            NSRange const r2 = [typeName rangeOfString:@">" options:NSBackwardsSearch];
+                            if (r1.location != NSNotFound && r2.location != NSNotFound) {
                                 
-                                NSString *ignoreProtocol = [typeName substringWithRange:NSMakeRange(range.location + 1, typeName.length - range.location - 2)];
+                                NSString *ignoreProtocol = [typeName substringWithRange:NSMakeRange(r1.location + 1, r2.location - r1.location - 1)];
                                 info |= ignoreForProtocols(ignoreProtocol);
                                 
-                                if (range.location != 0) {
-                                    typeName = [typeName substringToIndex:range.location];
+                                if (r1.location != 0) {
+                                    typeName = [typeName substringToIndex:r1.location];
                                 } else {
                                     typeName = @(@encode(id));
                                     info |= kTCEncodingTypeId;
@@ -313,13 +303,14 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
         return nil;
     }
     
-    static NSRecursiveLock *s_recursiveLock;
-    static NSMutableDictionary<NSString *, NSMutableDictionary *> *s_propertyByClass;
-    static NSArray<NSString *> *s_sysProps;
+    static NSRecursiveLock *s_recursiveLock = nil;
+    static NSMapTable<Class, NSMutableDictionary<NSString *, TCMappingMeta *> *> *s_propertyByClass = nil;
+    static NSArray<NSString *> *s_sysProps = nil;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        s_propertyByClass = [NSMutableDictionary dictionary];
+        s_propertyByClass = [NSMapTable mapTableWithKeyOptions:NSPointerFunctionsWeakMemory | NSPointerFunctionsObjectPointerPersonality
+                                                  valueOptions:NSPointerFunctionsStrongMemory];
         s_recursiveLock = [[NSRecursiveLock alloc] init];
         s_recursiveLock.name = @"recursiveLock.TCMappingMeta.TCKit";
         
@@ -331,10 +322,8 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     });
     
     
-    NSString *key = NSStringFromClass(klass);
-    
     [s_recursiveLock lock];
-    NSMutableDictionary<NSString *, TCMappingMeta *> *propertyNames = s_propertyByClass[key];
+    NSMutableDictionary<NSString *, TCMappingMeta *> *propertyNames = [s_propertyByClass objectForKey:klass];
     if (nil != propertyNames) {
         [s_recursiveLock unlock];
         return propertyNames;
@@ -353,7 +342,7 @@ NSDictionary<NSString *, TCMappingMeta *> *tc_propertiesUntilRootClass(Class kla
     free(properties);
     
     [propertyNames addEntriesFromDictionary:tc_propertiesUntilRootClass(class_getSuperclass(klass))];
-    s_propertyByClass[key] = propertyNames;
+    [s_propertyByClass setObject:propertyNames forKey:klass];
     
     [s_recursiveLock unlock];
     return propertyNames;

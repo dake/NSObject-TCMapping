@@ -1,23 +1,18 @@
 //
-//  NSObject+TCNSCoding.m
+//  NSObject+TCPersistent.m
 //  TCKit
 //
 //  Created by dake on 16/3/2.
 //  Copyright © 2016年 dake. All rights reserved.
 //
 
-#import "NSObject+TCNSCoding.h"
+#import "NSObject+TCPersistent.h"
 #import <objc/runtime.h>
 
 #import "TCMappingMeta.h"
 
 
-@implementation NSObject (TCNSCoding)
-
-+ (TCMappingOption *)tc_mappingOption
-{
-    return nil;
-}
+@implementation NSObject (TCPersistent)
 
 - (void)tc_encodeWithCoder:(NSCoder *)coder
 {
@@ -27,13 +22,13 @@
         return;
     }
     
-    NSDictionary *nameMapping = self.class.tc_mappingOption.nameNSCodingMapping;
+    NSDictionary *nameMapping = [self respondsToSelector:@selector(tc_mappingOption)] ? self.class.tc_mappingOption.nameNSCodingMapping : nil;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
         TCEncodingType type = tc_typeForInfo(meta->_info);
         
-        if (tc_ignoreNSCodingForInfo(meta->_info) || NULL == meta->_getter || NULL == meta->_setter ||
+        if (tc_ignorePersistentForInfo(meta->_info) || NULL == meta->_getter || NULL == meta->_setter ||
             type == kTCEncodingTypeBlock) {
             continue;
         }
@@ -82,11 +77,11 @@
         return nil;
     }
     
-    NSDictionary *nameMapping = self.class.tc_mappingOption.nameNSCodingMapping;
+    NSDictionary *nameMapping = [self respondsToSelector:@selector(tc_mappingOption)] ? self.class.tc_mappingOption.nameNSCodingMapping : nil;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        if (tc_ignoreNSCodingForInfo(meta->_info) || NULL == meta->_setter) {
+        if (tc_ignorePersistentForInfo(meta->_info) || NULL == meta->_setter) {
             continue;
         }
         NSString *mapKey = nameMapping[key];
@@ -109,11 +104,6 @@
 
 @implementation NSObject (TCNSCopying)
 
-+ (TCMappingOption *)tc_mappingOption
-{
-    return nil;
-}
-
 - (instancetype)tc_copy
 {
     NSAssert(![TCMappingMeta isNSTypeForClass:self.class], @"use copy instead of %@!", NSStringFromSelector(_cmd));
@@ -123,11 +113,11 @@
     
     typeof(self) copy = [[self.class alloc] init];
     
-    NSArray<NSString *> *ignoreList = self.class.tc_mappingOption.nameCopyIgnore;
+    NSArray<NSString *> *ignoreList = [self respondsToSelector:@selector(tc_mappingOption)] ? self.class.tc_mappingOption.nameCopyIgnore : nil;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
     for (NSString *key in metaDic) {
         __unsafe_unretained TCMappingMeta *meta = metaDic[key];
-        if (NULL == meta->_getter || NULL == meta->_setter || tc_ignoreCopyingForInfo(meta->_info) || [ignoreList containsObject:key]) {
+        if (NULL == meta->_setter || NULL == meta->_getter || tc_ignoreCopyingForInfo(meta->_info) || [ignoreList containsObject:key]) {
             continue;
         }
         

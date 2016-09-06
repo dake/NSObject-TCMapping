@@ -16,7 +16,6 @@
 #import "TCMappingMeta.h"
 #import "UIColor+TCUtilities.h"
 
-
 #if ! __has_feature(objc_arc)
 #error this file is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
 #endif
@@ -183,14 +182,14 @@ NS_INLINE UIColor *valueForUIColor(NSDictionary *dic, Class klass)
             nil != b ||
             nil != a) {
             
-            return [UIColor colorWithRed:r.doubleValue green:g.doubleValue blue:b.doubleValue alpha:nil != a ? a.doubleValue : 1.0f];
+            return [UIColor colorWithRed:(CGFloat)r.doubleValue green:(CGFloat)g.doubleValue blue:(CGFloat)b.doubleValue alpha:nil != a ? (CGFloat)a.doubleValue : 1.0f];
         }
     }
     
     return nil;
 }
 
-NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, TCMappingOption *option)
+static id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, TCMappingOption *option, Class curClass)
 {
     id ret = nil;
     
@@ -335,28 +334,27 @@ NS_INLINE id valueForBaseTypeOfProperty(id value, TCMappingMeta *meta, TCMapping
                 if ([value isKindOfClass:meta->_typeClass]) {
                     ret = value;
                 } else if ([value isKindOfClass:NSString.class]) { // "0xff65ce00" or "#0xff65ce00"
-                    NSString *str = ((NSString *)value).lowercaseString;
-                    if ([str hasPrefix:@"#"]) {
-                        str = [str substringFromIndex:1];
-                    }
-                    
-                    if ([str hasPrefix:@"0x"]) {
-                        str = [str substringFromIndex:2];
-                    }
-                    
-                    NSUInteger len = str.length;
-                    if (len == 6) {
-                        ret = [UIColor colorWithRGBHexString:(NSString *)value];
-                        
-                    } else if (len == 8) {
-                        ret = [UIColor colorWithARGBHexString:(NSString *)value];
+                    if ([curClass respondsToSelector:@selector(tc_transformColorFromString:)]) {
+                        ret = [curClass tc_transformColorFromString:value];
                     }
                 } else if ([value isKindOfClass:NSNumber.class]) {
-                    uint32_t hex = ((NSNumber *)value).unsignedIntValue;
-                    if (hex < 0x01000000) { // RGB or clear
-                        ret = [UIColor colorWithRGBHex:hex];
-                    } else { // ARGB
-                        ret = [UIColor colorWithARGBHex:hex];
+                    if ([curClass respondsToSelector:@selector(tc_transformColorFromHex:)]) {
+                        ret = [curClass tc_transformColorFromHex:((NSNumber *)value).unsignedIntValue];
+                    }
+                }
+                break;
+            }
+                
+            case kTCEncodingTypeUIImage: {
+                if ([value isKindOfClass:meta->_typeClass]) {
+                    ret = value;
+                } else if ([value isKindOfClass:NSString.class]) { // base64 string
+                    if ([curClass respondsToSelector:@selector(tc_transformImageFromBase64String:)]) {
+                        ret = [curClass tc_transformImageFromBase64String:value];
+                    }
+                } else if ([value isKindOfClass:NSData.class]) {
+                    if ([curClass respondsToSelector:@selector(tc_transformImageFromData:)]) {
+                        ret = [curClass tc_transformImageFromData:value];
                     }
                 }
                 break;
@@ -434,7 +432,7 @@ static NSArray *mappingArray(NSArray *value, Class arryKlass, id<TCMappingPersis
                 meta->_propertyName =  property;
             }
 
-            id obj = valueForBaseTypeOfProperty(dic, meta, option);
+            id obj = valueForBaseTypeOfProperty(dic, meta, option, klass);
             if (nil != obj) {
                 [arry addObject:obj];
             }
@@ -465,11 +463,6 @@ static id databaseInstanceWithValue(NSDictionary *value, NSDictionary *primaryKe
 
 
 @implementation NSObject (TCMapping)
-
-+ (TCMappingOption *)tc_mappingOption
-{
-    return nil;
-}
 
 + (NSMutableArray *)tc_mappingWithArray:(NSArray *)arry
 {
@@ -567,7 +560,7 @@ NS_INLINE dispatch_queue_t tc_mappingQueue(void)
     [self tc_asyncMappingWithArray:arry context:nil inQueue:nil finish:finish];
 }
 
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(id data))finish
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic finish:(void(^)(__kindof NSObject * __nullable data))finish
 {
     [self tc_asyncMappingWithDictionary:dic context:nil inQueue:nil finish:finish];
 }
@@ -577,13 +570,13 @@ NS_INLINE dispatch_queue_t tc_mappingQueue(void)
     [self tc_asyncMappingWithArray:arry context:nil inQueue:queue finish:finish];
 }
 
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
++ (void)tc_asyncMappingWithDictionary:(NSDictionary<NSString *, id> *)dic inQueue:(dispatch_queue_t)queue finish:(void(^)(__kindof NSObject * __nullable data))finish
 {
     [self tc_asyncMappingWithDictionary:dic context:nil inQueue:queue finish:finish];
 }
 
 
-+ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(id data))finish
++ (void)tc_asyncMappingWithDictionary:(NSDictionary *)dic context:(id<TCMappingPersistentContext>)context inQueue:(dispatch_queue_t)queue finish:(void(^)(__kindof NSObject * __nullable data))finish
 {
     if (nil == finish) {
         return;
@@ -615,7 +608,36 @@ NS_INLINE dispatch_queue_t tc_mappingQueue(void)
     });
 }
 
+
+- (void)tc_merge:(__kindof NSObject *)obj map:(id (^)(SEL prop, id left, id right))map
+{
+    NSParameterAssert(obj);
+    NSParameterAssert(map);
+    NSAssert([obj isKindOfClass:self.class], @"obj must be kindof self class");
+    
+    if (nil == obj || nil == map || ![obj isKindOfClass:self.class]) {
+        return;
+    }
+    
+    __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(self.class);
+    for (NSString *key in metaDic) {
+        __unsafe_unretained TCMappingMeta *meta = metaDic[key];
+        if (NULL == meta->_setter || NULL == meta->_getter) {
+            continue;
+        }
+        
+        id left = [self valueForKey:key meta:meta ignoreNSNull:NO];
+        id right = [obj valueForKey:key meta:meta ignoreNSNull:NO];
+        id value = map(meta->_getter, left, right);
+        
+        if (value != left) {
+            [self setValue:value forKey:key meta:meta forPersistent:NO];
+        }
+    }
+}
+
 @end
+
 
 static id tc_mappingWithDictionary(NSDictionary *dataDic,
                                    TCMappingOption *opt,
@@ -627,14 +649,13 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
         return nil;
     }
     
-    
     NSDictionary *nameDic = opt.nameMapping;
     __unsafe_unretained NSDictionary<NSString *, TCMappingMeta *> *metaDic = tc_propertiesUntilRootClass(curClass);
     
     if (nameDic.count < 1) {
         NSDictionary *tmpDic = nameDic;
         if (tmpDic.count < 1) {
-            tmpDic = [curClass tc_mappingOption].nameMapping;
+            tmpDic = [curClass respondsToSelector:@selector(tc_mappingOption)] ? [curClass tc_mappingOption].nameMapping : nil;
         }
         nameDic = nameMappingDicFor(tmpDic, metaDic.allKeys);
     } else {
@@ -642,7 +663,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
     }
     
     NSObject *obj = target;
-    TCMappingOption *option = opt ?: [curClass tc_mappingOption];
+    TCMappingOption *option = opt ?: ([curClass respondsToSelector:@selector(tc_mappingOption)] ? [curClass tc_mappingOption] : nil);
     BOOL isNSNullValid = option.shouldMappingNSNull;
     NSDictionary *typeDic = option.typeMapping;
 
@@ -679,7 +700,8 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
                     if (Nil != dicItemClass) {
                         NSMutableDictionary *tmpDic = NSMutableDictionary.dictionary;
                         for (id dicKey in valueDic) {
-                            id tmpValue = tc_mappingWithDictionary(valueDic[dicKey], [dicItemClass tc_mappingOption], context, nil, dicItemClass);
+                            TCMappingOption *opt = [dicItemClass respondsToSelector:@selector(tc_mappingOption)] ? [dicItemClass tc_mappingOption] : nil;
+                            id tmpValue = tc_mappingWithDictionary(valueDic[dicKey], opt, context, nil, dicItemClass);
                             if (nil != tmpValue) {
                                 tmpDic[dicKey] = tmpValue;
                             }
@@ -746,7 +768,7 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
             }
 
         } else if (value != (id)kCFNull) {
-            value = valueForBaseTypeOfProperty(value, meta, option);
+            value = valueForBaseTypeOfProperty(value, meta, option, curClass);
         }
         
         if (nil == value) {
@@ -797,37 +819,37 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
 
 - (char)charValue
 {
-    return self.intValue;
+    return (char)self.intValue;
 }
 
 - (unsigned char)unsignedCharValue
 {
-    return self.intValue;
+    return (unsigned char)self.intValue;
 }
 
 - (short)shortValue
 {
-    return self.intValue;
+    return (short)self.intValue;
 }
 
 - (unsigned short)unsignedShortValue
 {
-    return self.intValue;
+    return (unsigned short)self.intValue;
 }
 
 - (unsigned int)unsignedIntValue
 {
-    return self.intValue;
+    return (unsigned int)self.longLongValue;
 }
 
 - (long)longValue
 {
-    return self.integerValue;
+    return self.longLongValue;
 }
 
 - (unsigned long)unsignedLongValue
 {
-    return self.integerValue;
+    return self.longLongValue;
 }
 
 - (unsigned long long)unsignedLongLongValue

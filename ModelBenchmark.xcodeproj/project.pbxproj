@@ -7,16 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B70EF9F61CAA8BA700375342 /* TCMappingOption.m in Sources */ = {isa = PBXBuildFile; fileRef = B70EF9F51CAA8BA700375342 /* TCMappingOption.m */; };
+		B7032C5C1D7E67BE006944B4 /* NSObject+TCCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C531D7E67BE006944B4 /* NSObject+TCCoding.m */; };
+		B7032C5D1D7E67BE006944B4 /* NSObject+TCMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C551D7E67BE006944B4 /* NSObject+TCMapping.m */; };
+		B7032C5E1D7E67BE006944B4 /* NSObject+TCPersistent.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C571D7E67BE006944B4 /* NSObject+TCPersistent.m */; };
+		B7032C5F1D7E67BE006944B4 /* TCMappingMeta.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C591D7E67BE006944B4 /* TCMappingMeta.m */; };
+		B7032C601D7E67BE006944B4 /* TCMappingOption.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C5B1D7E67BE006944B4 /* TCMappingOption.m */; };
+		B7032C681D7E684A006944B4 /* NSManagedObjectContext+TCMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C631D7E684A006944B4 /* NSManagedObjectContext+TCMapping.m */; };
+		B7032C691D7E684A006944B4 /* NSObject+TCMappingExtra.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C651D7E684A006944B4 /* NSObject+TCMappingExtra.m */; };
+		B7032C6A1D7E684A006944B4 /* UIColor+TCUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C671D7E684A006944B4 /* UIColor+TCUtilities.m */; };
+		B7032C6E1D7E6876006944B4 /* AnimatedGIFImageSerialization.m in Sources */ = {isa = PBXBuildFile; fileRef = B7032C6D1D7E6876006944B4 /* AnimatedGIFImageSerialization.m */; };
 		B70F10F51C996941009FB9CC /* TCMappingTests.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F10F41C996941009FB9CC /* TCMappingTests.m */; };
 		B70F4B171BDF547E00EB743A /* TCWeiboModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B70F4B161BDF547E00EB743A /* TCWeiboModel.m */; };
-		B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */; };
-		B711B6A11C8833EE00BC437C /* TCMappingMeta.m in Sources */ = {isa = PBXBuildFile; fileRef = B711B6A01C8833EE00BC437C /* TCMappingMeta.m */; };
-		B7187BBD1C92DB0200C5F77A /* NSObject+TCJSONMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */; };
-		B7AC83581BDE3C9000679B78 /* NSObject+TCMapping.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */; };
 		B7AC835F1BDE3C9C00679B78 /* NSObject+YYModel.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835B1BDE3C9C00679B78 /* NSObject+YYModel.m */; };
 		B7AC83601BDE3C9C00679B78 /* YYClassInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7AC835D1BDE3C9C00679B78 /* YYClassInfo.m */; };
-		B7E543391CAE686D00708EE9 /* UIColor+TCUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */; };
 		D9B193811BAC714D00F93933 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193801BAC714D00F93933 /* main.m */; };
 		D9B193841BAC714D00F93933 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193831BAC714D00F93933 /* AppDelegate.m */; };
 		D9B193871BAC714D00F93933 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = D9B193861BAC714D00F93933 /* ViewController.m */; };
@@ -112,28 +115,34 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B70EF9F41CAA8BA700375342 /* TCMappingOption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingOption.h; sourceTree = "<group>"; };
-		B70EF9F51CAA8BA700375342 /* TCMappingOption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingOption.m; sourceTree = "<group>"; };
+		B7032C521D7E67BE006944B4 /* NSObject+TCCoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCCoding.h"; sourceTree = "<group>"; };
+		B7032C531D7E67BE006944B4 /* NSObject+TCCoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCCoding.m"; sourceTree = "<group>"; };
+		B7032C541D7E67BE006944B4 /* NSObject+TCMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCMapping.h"; sourceTree = "<group>"; };
+		B7032C551D7E67BE006944B4 /* NSObject+TCMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCMapping.m"; sourceTree = "<group>"; };
+		B7032C561D7E67BE006944B4 /* NSObject+TCPersistent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCPersistent.h"; sourceTree = "<group>"; };
+		B7032C571D7E67BE006944B4 /* NSObject+TCPersistent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCPersistent.m"; sourceTree = "<group>"; };
+		B7032C581D7E67BE006944B4 /* TCMappingMeta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingMeta.h; sourceTree = "<group>"; };
+		B7032C591D7E67BE006944B4 /* TCMappingMeta.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingMeta.m; sourceTree = "<group>"; };
+		B7032C5A1D7E67BE006944B4 /* TCMappingOption.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingOption.h; sourceTree = "<group>"; };
+		B7032C5B1D7E67BE006944B4 /* TCMappingOption.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingOption.m; sourceTree = "<group>"; };
+		B7032C621D7E684A006944B4 /* NSManagedObjectContext+TCMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSManagedObjectContext+TCMapping.h"; sourceTree = "<group>"; };
+		B7032C631D7E684A006944B4 /* NSManagedObjectContext+TCMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSManagedObjectContext+TCMapping.m"; sourceTree = "<group>"; };
+		B7032C641D7E684A006944B4 /* NSObject+TCMappingExtra.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCMappingExtra.h"; sourceTree = "<group>"; };
+		B7032C651D7E684A006944B4 /* NSObject+TCMappingExtra.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCMappingExtra.m"; sourceTree = "<group>"; };
+		B7032C661D7E684A006944B4 /* UIColor+TCUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+TCUtilities.h"; sourceTree = SOURCE_ROOT; };
+		B7032C671D7E684A006944B4 /* UIColor+TCUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+TCUtilities.m"; sourceTree = SOURCE_ROOT; };
+		B7032C6C1D7E6876006944B4 /* AnimatedGIFImageSerialization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AnimatedGIFImageSerialization.h; sourceTree = "<group>"; };
+		B7032C6D1D7E6876006944B4 /* AnimatedGIFImageSerialization.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AnimatedGIFImageSerialization.m; sourceTree = "<group>"; };
 		B70F10EC1C996904009FB9CC /* ModelBenchmarkTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ModelBenchmarkTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B70F10F01C996904009FB9CC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B70F10F41C996941009FB9CC /* TCMappingTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingTests.m; sourceTree = "<group>"; };
 		B70F4B151BDF547E00EB743A /* TCWeiboModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCWeiboModel.h; sourceTree = "<group>"; };
 		B70F4B161BDF547E00EB743A /* TCWeiboModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCWeiboModel.m; sourceTree = "<group>"; };
-		B711B6901C87F44700BC437C /* NSObject+TCNSCoding.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCNSCoding.h"; sourceTree = "<group>"; };
-		B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCNSCoding.m"; sourceTree = "<group>"; };
-		B711B69F1C8833EE00BC437C /* TCMappingMeta.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMappingMeta.h; sourceTree = "<group>"; };
-		B711B6A01C8833EE00BC437C /* TCMappingMeta.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMappingMeta.m; sourceTree = "<group>"; };
-		B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCJSONMapping.h"; sourceTree = "<group>"; };
-		B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCJSONMapping.m"; sourceTree = "<group>"; };
-		B7AC83561BDE3C9000679B78 /* NSObject+TCMapping.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+TCMapping.h"; sourceTree = "<group>"; };
-		B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+TCMapping.m"; sourceTree = "<group>"; };
 		B7AC835A1BDE3C9C00679B78 /* NSObject+YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSObject+YYModel.h"; sourceTree = "<group>"; };
 		B7AC835B1BDE3C9C00679B78 /* NSObject+YYModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSObject+YYModel.m"; sourceTree = "<group>"; };
 		B7AC835C1BDE3C9C00679B78 /* YYClassInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYClassInfo.h; sourceTree = "<group>"; };
 		B7AC835D1BDE3C9C00679B78 /* YYClassInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = YYClassInfo.m; sourceTree = "<group>"; };
 		B7AC835E1BDE3C9C00679B78 /* YYModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = YYModel.h; sourceTree = "<group>"; };
-		B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIColor+TCUtilities.m"; sourceTree = SOURCE_ROOT; };
-		B7E543381CAE686D00708EE9 /* UIColor+TCUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+TCUtilities.h"; sourceTree = SOURCE_ROOT; };
 		D941E9B11BD54ED800A7B905 /* GithubUserObjectMapper.swift.bak */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = GithubUserObjectMapper.swift.bak; sourceTree = "<group>"; };
 		D9B1937B1BAC714D00F93933 /* ModelBenchmark.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ModelBenchmark.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D9B1937F1BAC714D00F93933 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -305,6 +314,46 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B7032C511D7E67BE006944B4 /* TCMapping */ = {
+			isa = PBXGroup;
+			children = (
+				B7032C521D7E67BE006944B4 /* NSObject+TCCoding.h */,
+				B7032C531D7E67BE006944B4 /* NSObject+TCCoding.m */,
+				B7032C541D7E67BE006944B4 /* NSObject+TCMapping.h */,
+				B7032C551D7E67BE006944B4 /* NSObject+TCMapping.m */,
+				B7032C561D7E67BE006944B4 /* NSObject+TCPersistent.h */,
+				B7032C571D7E67BE006944B4 /* NSObject+TCPersistent.m */,
+				B7032C581D7E67BE006944B4 /* TCMappingMeta.h */,
+				B7032C591D7E67BE006944B4 /* TCMappingMeta.m */,
+				B7032C5A1D7E67BE006944B4 /* TCMappingOption.h */,
+				B7032C5B1D7E67BE006944B4 /* TCMappingOption.m */,
+			);
+			path = TCMapping;
+			sourceTree = SOURCE_ROOT;
+		};
+		B7032C611D7E684A006944B4 /* TCMapping+Extra */ = {
+			isa = PBXGroup;
+			children = (
+				B7032C6B1D7E6876006944B4 /* AnimatedGIFImageSerialization */,
+				B7032C661D7E684A006944B4 /* UIColor+TCUtilities.h */,
+				B7032C671D7E684A006944B4 /* UIColor+TCUtilities.m */,
+				B7032C621D7E684A006944B4 /* NSManagedObjectContext+TCMapping.h */,
+				B7032C631D7E684A006944B4 /* NSManagedObjectContext+TCMapping.m */,
+				B7032C641D7E684A006944B4 /* NSObject+TCMappingExtra.h */,
+				B7032C651D7E684A006944B4 /* NSObject+TCMappingExtra.m */,
+			);
+			path = "TCMapping+Extra";
+			sourceTree = SOURCE_ROOT;
+		};
+		B7032C6B1D7E6876006944B4 /* AnimatedGIFImageSerialization */ = {
+			isa = PBXGroup;
+			children = (
+				B7032C6C1D7E6876006944B4 /* AnimatedGIFImageSerialization.h */,
+				B7032C6D1D7E6876006944B4 /* AnimatedGIFImageSerialization.m */,
+			);
+			path = AnimatedGIFImageSerialization;
+			sourceTree = SOURCE_ROOT;
+		};
 		B70F10ED1C996904009FB9CC /* ModelBenchmarkTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -313,25 +362,6 @@
 			);
 			path = ModelBenchmarkTests;
 			sourceTree = "<group>";
-		};
-		B7AC83551BDE3C9000679B78 /* TCMapping */ = {
-			isa = PBXGroup;
-			children = (
-				B7E543371CAE686D00708EE9 /* UIColor+TCUtilities.m */,
-				B7E543381CAE686D00708EE9 /* UIColor+TCUtilities.h */,
-				B70EF9F41CAA8BA700375342 /* TCMappingOption.h */,
-				B70EF9F51CAA8BA700375342 /* TCMappingOption.m */,
-				B7187BBB1C92DB0200C5F77A /* NSObject+TCJSONMapping.h */,
-				B7187BBC1C92DB0200C5F77A /* NSObject+TCJSONMapping.m */,
-				B711B69F1C8833EE00BC437C /* TCMappingMeta.h */,
-				B711B6A01C8833EE00BC437C /* TCMappingMeta.m */,
-				B711B6901C87F44700BC437C /* NSObject+TCNSCoding.h */,
-				B711B6911C87F44700BC437C /* NSObject+TCNSCoding.m */,
-				B7AC83561BDE3C9000679B78 /* NSObject+TCMapping.h */,
-				B7AC83571BDE3C9000679B78 /* NSObject+TCMapping.m */,
-			);
-			path = TCMapping;
-			sourceTree = SOURCE_ROOT;
 		};
 		B7AC83591BDE3C9C00679B78 /* YYModel */ = {
 			isa = PBXGroup;
@@ -367,8 +397,9 @@
 		D9B1937D1BAC714D00F93933 /* ModelBenchmark */ = {
 			isa = PBXGroup;
 			children = (
+				B7032C611D7E684A006944B4 /* TCMapping+Extra */,
+				B7032C511D7E67BE006944B4 /* TCMapping */,
 				B7AC83591BDE3C9C00679B78 /* YYModel */,
-				B7AC83551BDE3C9000679B78 /* TCMapping */,
 				D9EB039F1BD64D1D00B3E0F5 /* Mantle */,
 				D9EB03851BD64D1D00B3E0F5 /* JSONModel */,
 				D9EB034F1BD64D1D00B3E0F5 /* FastEasyMapping */,
@@ -834,20 +865,19 @@
 				D9EB04081BD64D1E00B3E0F5 /* MJExtensionConst.m in Sources */,
 				D9EB040E1BD64D1E00B3E0F5 /* NSObject+MJCoding.m in Sources */,
 				D9EB03EC1BD64D1E00B3E0F5 /* FEMTypeIntrospection.m in Sources */,
+				B7032C5C1D7E67BE006944B4 /* NSObject+TCCoding.m in Sources */,
+				B7032C681D7E684A006944B4 /* NSManagedObjectContext+TCMapping.m in Sources */,
 				D9EB040F1BD64D1E00B3E0F5 /* NSObject+MJKeyValue.m in Sources */,
 				D9EB04101BD64D1E00B3E0F5 /* NSObject+MJProperty.m in Sources */,
 				D9EB03F71BD64D1E00B3E0F5 /* EXTRuntimeExtensions.m in Sources */,
 				D9B194801BAC737000F93933 /* YYWeiboModel.m in Sources */,
-				B7AC83581BDE3C9000679B78 /* NSObject+TCMapping.m in Sources */,
-				B711B6921C87F44700BC437C /* NSObject+TCNSCoding.m in Sources */,
 				D9B193841BAC714D00F93933 /* AppDelegate.m in Sources */,
 				D9EB03EA1BD64D1E00B3E0F5 /* FEMMappingUtility.m in Sources */,
-				B70EF9F61CAA8BA700375342 /* TCMappingOption.m in Sources */,
 				D9EB03E61BD64D1E00B3E0F5 /* FEMExcludableCollection.m in Sources */,
+				B7032C601D7E67BE006944B4 /* TCMappingOption.m in Sources */,
 				D9EB03E41BD64D1E00B3E0F5 /* FEMManagedObjectStore.m in Sources */,
 				D9EB04061BD64D1E00B3E0F5 /* NSValueTransformer+MTLPredefinedTransformerAdditions.m in Sources */,
 				D9EB03ED1BD64D1E00B3E0F5 /* JSONModel.m in Sources */,
-				B711B6A11C8833EE00BC437C /* TCMappingMeta.m in Sources */,
 				D9EB03DC1BD64D1E00B3E0F5 /* FEMAssignmentPolicy.m in Sources */,
 				D9B194841BAC737000F93933 /* MJWeiboModel.m in Sources */,
 				D9EB03E01BD64D1E00B3E0F5 /* FEMAttribute.m in Sources */,
@@ -865,29 +895,33 @@
 				D9EB03FF1BD64D1E00B3E0F5 /* NSArray+MTLManipulationAdditions.m in Sources */,
 				D9EB04051BD64D1E00B3E0F5 /* NSValueTransformer+MTLInversionAdditions.m in Sources */,
 				D9EB03E81BD64D1E00B3E0F5 /* NSArray+FEMPropertyRepresentation.m in Sources */,
+				B7032C691D7E684A006944B4 /* NSObject+TCMappingExtra.m in Sources */,
 				D9EB03DF1BD64D1E00B3E0F5 /* FEMDeserializer.m in Sources */,
 				D9EB03E51BD64D1E00B3E0F5 /* FEMObjectStore.m in Sources */,
 				D9B1947F1BAC737000F93933 /* GitHubUser.m in Sources */,
 				D9B194821BAC737000F93933 /* MTWeiboModel.m in Sources */,
 				D9EB03E91BD64D1E00B3E0F5 /* NSObject+FEMKVCExtension.m in Sources */,
-				B7187BBD1C92DB0200C5F77A /* NSObject+TCJSONMapping.m in Sources */,
 				D9B193811BAC714D00F93933 /* main.m in Sources */,
 				D9EB04041BD64D1E00B3E0F5 /* NSObject+MTLComparisonAdditions.m in Sources */,
 				D9EB040A1BD64D1E00B3E0F5 /* MJProperty.m in Sources */,
 				D9EB03E71BD64D1E00B3E0F5 /* FEMMergeableCollection.m in Sources */,
 				D9EB03EF1BD64D1E00B3E0F5 /* JSONModelClassProperty.m in Sources */,
+				B7032C6A1D7E684A006944B4 /* UIColor+TCUtilities.m in Sources */,
 				D9EB03EE1BD64D1E00B3E0F5 /* JSONModelArray.m in Sources */,
 				D9EB03F21BD64D1E00B3E0F5 /* JSONAPI.m in Sources */,
+				B7032C5F1D7E67BE006944B4 /* TCMappingMeta.m in Sources */,
 				D9EB04111BD64D1E00B3E0F5 /* NSString+MJExtension.m in Sources */,
 				D9EB03F41BD64D1E00B3E0F5 /* JSONModel+networking.m in Sources */,
 				D9EB03F01BD64D1E00B3E0F5 /* JSONModelError.m in Sources */,
+				B7032C5D1D7E67BE006944B4 /* NSObject+TCMapping.m in Sources */,
 				D9EB03E31BD64D1E00B3E0F5 /* FEMSerializer.m in Sources */,
-				B7E543391CAE686D00708EE9 /* UIColor+TCUtilities.m in Sources */,
 				D9EB03EB1BD64D1E00B3E0F5 /* FEMRepresentationUtility.m in Sources */,
 				D9EB03DD1BD64D1E00B3E0F5 /* FEMRelationshipAssignmentContext.m in Sources */,
 				D9B1947E1BAC737000F93933 /* DateFormatter.m in Sources */,
 				B70F4B171BDF547E00EB743A /* TCWeiboModel.m in Sources */,
+				B7032C5E1D7E67BE006944B4 /* NSObject+TCPersistent.m in Sources */,
 				D9B194811BAC737000F93933 /* FEWeiboModel.m in Sources */,
+				B7032C6E1D7E6876006944B4 /* AnimatedGIFImageSerialization.m in Sources */,
 				B7AC835F1BDE3C9C00679B78 /* NSObject+YYModel.m in Sources */,
 				D9EB03FB1BD64D1E00B3E0F5 /* MTLModel.m in Sources */,
 				D9EB03FE1BD64D1E00B3E0F5 /* MTLValueTransformer.m in Sources */,

@@ -9,18 +9,20 @@ NS_INLINE CGFloat cgfunitclamp(CGFloat f) {return cgfmax(0.0, cgfmin(1.0, f));}
 CGColorSpaceRef tcDeviceRGBSpace(void)
 {
     static CGColorSpaceRef rgbSpace = NULL;
-    if (rgbSpace == NULL) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         rgbSpace = CGColorSpaceCreateDeviceRGB();
-    }
+    });
     return rgbSpace;
 }
 
 CGColorSpaceRef tcDeviceGraySpace(void)
 {
     static CGColorSpaceRef graySpace = NULL;
-    if (graySpace == NULL) {
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
         graySpace = CGColorSpaceCreateDeviceGray();
-    }
+    });
     return graySpace;
 }
 
@@ -39,10 +41,10 @@ UIColor *tcRandomColor(void)
 
 UIColor *tcInterpolateColors(UIColor *c1, UIColor *c2, CGFloat amt)
 {
-    CGFloat r = (c2.red * amt) + (c1.red * (1.0 - amt));
-    CGFloat g = (c2.green * amt) + (c1.green * (1.0 - amt));
-    CGFloat b = (c2.blue * amt) + (c1.blue * (1.0 - amt));
-    CGFloat a = (c2.alpha * amt) + (c1.alpha * (1.0 - amt));
+    CGFloat r = (c2.red * amt) + (c1.red * (1.0f - amt));
+    CGFloat g = (c2.green * amt) + (c1.green * (1.0f - amt));
+    CGFloat b = (c2.blue * amt) + (c1.blue * (1.0f - amt));
+    CGFloat a = (c2.alpha * amt) + (c1.alpha * (1.0f - amt));
     return [UIColor colorWithRed:r green:g blue:b alpha:a];
 }
 
@@ -65,15 +67,15 @@ UIColor *tcInterpolateColors(UIColor *c1, UIColor *c2, CGFloat amt)
         CGFloat saturation = (i + 1.0f) / 6.0f;
         
         for (CGFloat theta = 0; theta < M_PI * 2; theta += (M_PI / 6)) {
-            CGFloat hue = theta / (2 * M_PI);
+            CGFloat hue = (CGFloat)(theta / (2 * M_PI));
             UIColor *c = [UIColor colorWithHue:hue saturation:saturation brightness:1 alpha:1.0f];
             
-            CGFloat angle = (theta - M_PI_2);
+            CGFloat angle = (CGFloat)(theta - M_PI_2);
             if (angle < 0) {
                 angle += 2 * M_PI;
             }
             
-            path = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:angle endAngle:(angle + M_PI / 6) clockwise:YES];
+            path = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:angle endAngle:(CGFloat)(angle + M_PI / 6) clockwise:YES];
             path.lineWidth = width;
             
             [c set];
@@ -83,7 +85,7 @@ UIColor *tcInterpolateColors(UIColor *c1, UIColor *c2, CGFloat amt)
     
     if (useBorder) {
         [[UIColor blackColor] set];
-        path = [UIBezierPath bezierPathWithArcCenter:center radius:(side / 2) - (side / 28) startAngle:0 endAngle:2 * M_PI clockwise:YES];
+        path = [UIBezierPath bezierPathWithArcCenter:center radius:(side / 2) - (side / 28) startAngle:0 endAngle:(CGFloat)(2 * M_PI) clockwise:YES];
         path.lineWidth = 4;
         [path stroke];
     }
@@ -172,7 +174,7 @@ UIColor *tcInterpolateColors(UIColor *c1, UIColor *c2, CGFloat amt)
     CGFloat g = self.green;
     CGFloat b = self.blue;
     
-    CGFloat k = 1.0f - fmaxf(fmaxf(r, g), b);
+    CGFloat k = (CGFloat)(1.0f - fmax(fmax(r, g), b));
     CGFloat dK = 1.0f - k;
     
     CGFloat c = (1.0f - (r + k)) / dK;
@@ -262,7 +264,7 @@ UIColor *tcInterpolateColors(UIColor *c1, UIColor *c2, CGFloat amt)
         }
         h /= 60.0f;                                        // h is now in [0, 6)
         
-        double i = floor(h);                              // largest integer <= h
+        CGFloat i = (CGFloat)floor(h);                              // largest integer <= h
         CGFloat f = h - i;                                // fractional part of h
         CGFloat p = v * (1 - s);
         CGFloat q = v * (1 - (s * f));
@@ -350,10 +352,10 @@ void tcRGB2YUV_f(CGFloat r, CGFloat g, CGFloat b, CGFloat *y, CGFloat *u, CGFloa
         *y = (0.299f * r + 0.587f * g + 0.114f * b);
     }
     if (NULL != u && NULL != y) {
-        *u = ((b - *y) * 0.565f + 0.5);
+        *u = ((b - *y) * 0.565f + 0.5f);
     }
     if (NULL != v && NULL != y) {
-        *v = ((r - *y) * 0.713f + 0.5);
+        *v = ((r - *y) * 0.713f + 0.5f);
     }
     
     if (NULL != y) {
@@ -370,8 +372,8 @@ void tcRGB2YUV_f(CGFloat r, CGFloat g, CGFloat b, CGFloat *y, CGFloat *u, CGFloa
 void tcYUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloat *b)
 {
     CGFloat Y = y;
-    CGFloat U = u - 0.5;
-    CGFloat V = v - 0.5;
+    CGFloat U = u - 0.5f;
+    CGFloat V = v - 0.5f;
     
     if (NULL != r) {
         *r = cgfunitclamp(Y + 1.403f * V);
@@ -714,7 +716,7 @@ void tcYUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloa
 - (CGFloat)luminanceDistanceFrom:(UIColor *)anotherColor
 {
     CGFloat base = self.luminance - anotherColor.luminance;
-    return sqrt(base * base);
+    return (CGFloat)sqrt(base * base);
 }
 
 - (CGFloat)hueDistanceFrom:(UIColor *)anotherColor
@@ -729,7 +731,7 @@ void tcYUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloa
     CGFloat dH = self.hue - anotherColor.hue;
     CGFloat dS = self.saturation - anotherColor.saturation;
     
-    return sqrt(dH * dH + dS * dS);
+    return (CGFloat)sqrt(dH * dH + dS * dS);
 }
 
 - (CGFloat)distanceFrom:(UIColor *)anotherColor
@@ -738,7 +740,7 @@ void tcYUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloa
     CGFloat dG = self.green - anotherColor.green;
     CGFloat dB = self.blue - anotherColor.blue;
     
-    return sqrt(dR * dR + dG * dG + dB * dB);
+    return (CGFloat)sqrt(dR * dR + dG * dG + dB * dB);
 }
 
 - (BOOL)isEqualToColor:(UIColor *)anotherColor
@@ -985,10 +987,10 @@ void tcYUV2RGB_f(CGFloat y, CGFloat u, CGFloat v, CGFloat *r, CGFloat *g, CGFloa
     }
     
     for (NSInteger i = 1; i <= pairs; ++i) {
-        CGFloat a = fmod(stepAngle * i, 360.0f);
+        CGFloat a = (CGFloat)fmod(stepAngle * i, 360.0f);
         
-        CGFloat h1 = fmod(h + a, 360.0f);
-        CGFloat h2 = fmod(h + 360.0f - a, 360.0f);
+        CGFloat h1 = (CGFloat)fmod(h + a, 360.0f);
+        CGFloat h2 = (CGFloat)fmod(h + 360.0f - a, 360.0f);
         
         [colors addObject:[UIColor colorWithHue:h1 / 360.0f saturation:s brightness:v alpha:a]];
         [colors addObject:[UIColor colorWithHue:h2 / 360.0f saturation:s brightness:v alpha:a]];
@@ -1049,7 +1051,7 @@ void tcRGBtoHSP(
     }
     
     //  Calculate the Perceived brightness.
-    *P = sqrt(R*R*Pr + G*G*Pg + B*B*Pb);
+    *P = (CGFloat)sqrt(R*R*Pr + G*G*Pg + B*B*Pb);
     
     //  Calculate the Hue and Saturation.  (This part works
     //  the same way as in the HSV/B and HSL systems???.)
@@ -1061,27 +1063,27 @@ void tcRGBtoHSP(
     
     if (R>=G && R>=B) {   //  R is largest
         if (B>=G) {
-            *H=6./6.-1./6.*(B-G)/(R-G);
-            *S=1.-G/R;
+            *H=6.f/6.f-1.f/6.f*(B-G)/(R-G);
+            *S=1.f-G/R;
         } else {
-            *H=0./6.+1./6.*(G-B)/(R-B);
-            *S=1.-B/R;
+            *H=0.f/6.f+1.f/6.f*(G-B)/(R-B);
+            *S=1.f-B/R;
         }
     } else if (G>=R && G>=B) {   //  G is largest
         if (R>=B) {
-            *H=2./6.-1./6.*(R-B)/(G-B);
-            *S=1.-B/G;
+            *H=2.f/6.f-1.f/6.f*(R-B)/(G-B);
+            *S=1.f-B/G;
         } else {
-            *H=2./6.+1./6.*(B-R)/(G-R);
-            *S=1.-R/G;
+            *H=2.f/6.f+1.f/6.f*(B-R)/(G-R);
+            *S=1.f-R/G;
         }
     } else {   //  B is largest
         if (G>=R) {
-            *H=4./6.-1./6.*(G-R)/(B-R);
-            *S=1.-R/B;
+            *H=4.f/6.f-1.f/6.f*(G-R)/(B-R);
+            *S=1.f-R/B;
         } else {
-            *H=4./6.+1./6.*(R-G)/(B-G);
-            *S=1.-G/B;
+            *H=4.f/6.f+1.f/6.f*(R-G)/(B-G);
+            *S=1.f-G/B;
         }
     }
 }
@@ -1113,83 +1115,83 @@ void tcHSPtoRGB(
         return;
     }
     
-    CGFloat part = 0.0f, minOverMax = 1.-S;
+    CGFloat part = 0.0f, minOverMax = 1.f-S;
     
     if (minOverMax > 0.) {
-        if (H < 1./6.) {   //  R>G>B
-            H = 6.*( H-0./6.);
-            part = 1.+H*(1./minOverMax-1.);
+        if (H < 1.f/6.f) {   //  R>G>B
+            H = 6.f*( H-0.f/6.f);
+            part = 1.f+H*(1.f/minOverMax-1.f);
             
-            *B = P/sqrt(Pr/minOverMax/minOverMax+Pg*part*part+Pb);
+            *B = P/(CGFloat)sqrt(Pr/minOverMax/minOverMax+Pg*part*part+Pb);
             *R = *B / minOverMax;
             *G = *B + H * (*R - *B);
-        } else if (H < 2./6.) {   //  G>R>B
-            H = 6. * (-H + 2./6.);
-            part = 1. + H*(1./minOverMax-1.);
+        } else if (H < 2.f/6.f) {   //  G>R>B
+            H = 6.f * (-H + 2.f/6.f);
+            part = 1.f + H*(1.f/minOverMax-1.f);
             
-            *B = P/sqrt(Pg/minOverMax/minOverMax+Pr*part*part+Pb);
+            *B = P/(CGFloat)sqrt(Pg/minOverMax/minOverMax+Pr*part*part+Pb);
             *G = *B / minOverMax;
             *R = *B + H*(*G - *B);
-        } else if (H < 3./6.) {   //  G>B>R
-            H = 6.*(H - 2./6.);
-            part = 1. + H*(1./minOverMax-1.);
+        } else if (H < 3.f/6.f) {   //  G>B>R
+            H = 6.f*(H - 2.f/6.f);
+            part = 1.f + H*(1.f/minOverMax-1.f);
             
-            *R = P/sqrt(Pg/minOverMax/minOverMax+Pb*part*part+Pr);
+            *R = P/(CGFloat)sqrt(Pg/minOverMax/minOverMax+Pb*part*part+Pr);
             *G = *R / minOverMax;
             *B = *R + H*(*G - *R);
-        } else if (H < 4./6.) {   //  B>G>R
-            H = 6.*  (-H+4./6.);
-            part = 1. + H*(1./minOverMax-1.);
+        } else if (H < 4.f/6.f) {   //  B>G>R
+            H = 6.f*  (-H+4.f/6.f);
+            part = 1.f + H*(1.f/minOverMax-1.f);
             
-            *R = P/sqrt(Pb/minOverMax/minOverMax+Pg*part*part+Pr);
+            *R = P/(CGFloat)sqrt(Pb/minOverMax/minOverMax+Pg*part*part+Pr);
             *B = *R / minOverMax;
             *G = *R + H*(*B - *R);
-        } else if (H < 5./6.) {   //  B>R>G
-            H = 6. * (H-4./6.);
-            part = 1. + H*(1./minOverMax-1.);
+        } else if (H < 5.f/6.f) {   //  B>R>G
+            H = 6.f * (H-4.f/6.f);
+            part = 1.f + H*(1.f/minOverMax-1.f);
             
-            *G = P/sqrt(Pb/minOverMax/minOverMax+Pr*part*part+Pg);
+            *G = P/(CGFloat)sqrt(Pb/minOverMax/minOverMax+Pr*part*part+Pg);
             *B = *G / minOverMax;
             *R = *G + H*(*B - *G);
         } else {   //  R>B>G
-            H = 6. * (-H+6./6.);
-            part = 1. + H*(1./minOverMax-1.);
+            H = 6.f * (-H+6.f/6.f);
+            part = 1.f + H*(1.f/minOverMax-1.f);
             
-            *G = P/sqrt(Pr/minOverMax/minOverMax+Pb*part*part+Pg);
+            *G = P/(CGFloat)sqrt(Pr/minOverMax/minOverMax+Pb*part*part+Pg);
             *R = *G / minOverMax;
             *B = *G + H*(*R - *G);
         }
     } else {
-        if (H < 1./6.) {   //  R>G>B
-            H = 6.* (H-0./6.);
-            *R = sqrt(P*P/(Pr+Pg*H*H));
+        if (H < 1.f/6.f) {   //  R>G>B
+            H = 6.f* (H-0.f/6.f);
+            *R = (CGFloat)sqrt(P*P/(Pr+Pg*H*H));
             *G = *R * H;
-            *B = 0.;
-        } else if (H < 2./6.) {   //  G>R>B
-            H = 6. * (-H+2./6.);
-            *G = sqrt(P*P/(Pg+Pr*H*H));
+            *B = 0.f;
+        } else if (H < 2.f/6.f) {   //  G>R>B
+            H = 6.f * (-H+2.f/6.f);
+            *G = (CGFloat)sqrt(P*P/(Pg+Pr*H*H));
             *R = *G * H;
-            *B = 0.;
-        } else if (H < 3./6.) {   //  G>B>R
-            H = 6. * (H-2./6.);
-            *G = sqrt(P*P/(Pg+Pb*H*H));
+            *B = 0.f;
+        } else if (H < 3.f/6.f) {   //  G>B>R
+            H = 6.f * (H-2.f/6.f);
+            *G = (CGFloat)sqrt(P*P/(Pg+Pb*H*H));
             *B = *G * H;
-            *R = 0.;
-        } else if (H < 4./6.) {   //  B>G>R
-            H = 6.* (-H+4./6.);
-            *B = sqrt(P*P/(Pb+Pg*H*H));
+            *R = 0.f;
+        } else if (H < 4.f/6.f) {   //  B>G>R
+            H = 6.f* (-H+4.f/6.f);
+            *B = (CGFloat)sqrt(P*P/(Pb+Pg*H*H));
             *G = *B * H;
-            *R = 0.;
-        } else if (H < 5./6.) {   //  B>R>G
-            H = 6. * (H-4./6.);
-            *B = sqrt(P*P/(Pb+Pr*H*H));
+            *R = 0.f;
+        } else if (H < 5.f/6.f) {   //  B>R>G
+            H = 6.f * (H-4.f/6.f);
+            *B = (CGFloat)sqrt(P*P/(Pb+Pr*H*H));
             *R = *B * H;
-            *G = 0.;
+            *G = 0.f;
         } else {   //  R>B>G
-            H = 6. * (-H+6./6.);
-            *R = sqrt(P*P/(Pr+Pb*H*H));
+            H = 6.f * (-H+6.f/6.f);
+            *R = (CGFloat)sqrt(P*P/(Pr+Pb*H*H));
             *B = *R * H;
-            *G = 0.;
+            *G = 0.f;
         }
     }
 }
@@ -1413,12 +1415,12 @@ void tcHSPtoRGB(
     if (temperature <= 66) {
         red = 0xFF;
         green = temperature;
-        green = 99.4708025861 * log(green) - 161.1195681661;
+        green = (CGFloat)(99.4708025861 * log(green) - 161.1195681661);
     } else {
         red = temperature - 60;
-        red = 329.698727446 * pow(red, -0.1332047592);
+        red = (CGFloat)(329.698727446 * pow(red, -0.1332047592));
         green = temperature - 60;
-        green = 288.1221695283 * pow(green, -0.0755148492);
+        green = (CGFloat)(288.1221695283 * pow(green, -0.0755148492));
     }
     
     if (temperature >= 66) {
@@ -1427,7 +1429,7 @@ void tcHSPtoRGB(
         blue = 0;
     } else {
         blue = temperature - 10;
-        blue = 138.5177312231 * log(blue) - 305.0447927307;
+        blue = (CGFloat)(138.5177312231 * log(blue) - 305.0447927307);
     }
     
     
@@ -1486,7 +1488,7 @@ static NSDictionary *s_kelvin = nil;
     }
     
     NSNumber *temp = kelvinDictionary[bestMatch];
-    return temp.doubleValue;
+    return (CGFloat)temp.doubleValue;
 }
 
 

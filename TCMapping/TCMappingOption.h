@@ -8,7 +8,37 @@
 
 #import <Foundation/Foundation.h>
 
-typedef Class (^TCTypeMappingBlock)(id value);
+
+@class UIImage, UIColor;
+
+NS_ASSUME_NONNULL_BEGIN
+
+
+@class TCMappingOption;
+@protocol TCMappingOption <NSObject>
+
+@optional
++ (TCMappingOption * __nullable)tc_mappingOption;
+
+@end
+
+@protocol TCMappingTransform <NSObject>
+
+@optional
+// UIImage <-> NSData
++ (NSData * __nullable)tc_transformDataFromImage:(UIImage *)img;
++ (UIImage * __nullable)tc_transformImageFromData:(NSData *)data;
++ (UIImage * __nullable)tc_transformImageFromBase64String:(NSString *)str;
+
+// UIColor <-> NSString
++ (UIColor * __nullable)tc_transformColorFromString:(NSString *)string;
++ (UIColor * __nullable)tc_transformColorFromHex:(uint32_t)hex;
++ (NSString * __nullable)tc_transformHexStringFromColor:(UIColor *)color;
+
+@end
+
+
+typedef Class __nullable (^TCTypeMappingBlock)(id value);
 
 @interface TCMappingOption : NSObject <NSCopying>
 
@@ -61,25 +91,20 @@ typedef Class (^TCTypeMappingBlock)(id value);
 @property (nonatomic, strong) NSArray<NSString *> *nameCopyIgnore;
 
 
-#pragma mark - TCJSONMapping
+#pragma mark - TCCoding
 
 /**
  @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
  */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameJSONMapping;
-@property (nonatomic, assign) BOOL shouldJSONMappingNSNull; // ignore output NSNull or not
+@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameCodingMapping;
+@property (nonatomic, assign) BOOL shouldCodingNSNull; // ignore output NSNull or not
 
 
 // TODO: hash, equal  ignore
 
 
-#pragma mark - TCDictionaryMapping
-/**
- @brief	format: @{@"propertyName": @"json'propertyName" or NSNull.null for ignore}
- */
-@property (nonatomic, strong) NSDictionary<NSString *, NSString *> *nameDictionaryMapping;
-
-
 @end
+
+NS_ASSUME_NONNULL_END
 
 

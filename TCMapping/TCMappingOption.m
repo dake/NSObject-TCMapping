@@ -7,7 +7,7 @@
 //
 
 #import "TCMappingOption.h"
-#import "NSObject+TCNSCoding.h"
+#import "NSObject+TCPersistent.h"
 
 @implementation TCMappingOption
 

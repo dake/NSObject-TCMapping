@@ -14,7 +14,7 @@
 #import <UIKit/UIGeometry.h>
 
 #import "TCMappingMeta.h"
-#import "UIColor+TCUtilities.h"
+
 
 #if ! __has_feature(objc_arc)
 #error this file is ARC only. Either turn on ARC for the project or use -fobjc-arc flag
@@ -844,17 +844,17 @@ static id tc_mappingWithDictionary(NSDictionary *dataDic,
 
 - (long)longValue
 {
-    return self.longLongValue;
+    return (long)self.longLongValue;
 }
 
 - (unsigned long)unsignedLongValue
 {
-    return self.longLongValue;
+    return (unsigned long)self.longLongValue;
 }
 
 - (unsigned long long)unsignedLongLongValue
 {
-    return self.longLongValue;
+    return (unsigned long long)self.longLongValue;
 }
 
 
